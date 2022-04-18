@@ -38,8 +38,11 @@ def log_gamma_range(loggamma, logR, logB,
                     c (float): The speed of light, default value in cgs
     '''
     v_min = 2 + loggamma
-    logc = np.log(q / (m*c)) / np.log(base)
+    logc = np.log(q / (m*c**2)) / np.log(base)
     v_max = logR + logB + logc
+    # set a hard upper limit based on code performance
+    if v_max > 8.: 
+        v_max = 8.
     return v_min, v_max
 
 
@@ -55,10 +58,10 @@ def generate_sample_inputs(N, out):
     
     # Dictionary of sampling callables
     limits = {'log_R'       : sample(14, 17),
-              'log_B'       : sample(-3, 2),
+              'log_B'       : sample(-2, 2),
               'log_gamma'   : sample(0, 4),
               'log_le'      : sample(-5, -1),
-              'p'           : sample(1, 4)
+              'p'           : sample(1.5, 4)
               }
 
     # Pre-allocate arrays of samples
