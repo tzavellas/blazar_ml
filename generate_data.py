@@ -4,6 +4,8 @@
 import numpy as np
 import pandas as pd
 import argparse
+from astropy import constants as const
+
 
 
 class sample():
@@ -16,48 +18,28 @@ class sample():
         return self.f_sample(self.low, self.high)
     
 
-def gamma_min(gamma, multi=1e2):
+
+def log_gamma_range(loggamma, logR, logB, 
+                    base=10, 
+                    q=const.e.esu.value,
+                    m=const.m_e.cgs.value, 
+                    c=const.c.cgs.value):
     '''
-    Returns the value of gamma times a multiplier.
+    Function that calculates the range of the log_gamma_max values given the a
+    loggamma value
 
             Parameters:
-                    gamma (float): Gamma
-                    multi (float): The multiplier
+                    loggamma (float): Reference loggamma
+                    logR (float): Reference logR
+                    logB (float): Reference logB
+                    base (float): The logarithm base, default value is 10
+                    q (float): The electric charge, default value in cgs
+                    m (float): The mass of the charge. default value in cgs
+                    c (float): The speed of light, default value in cgs
     '''
-    return 1e2 * gamma
-
-
-def gamma_max(R, B, q=4.8032e-10, m=9.1094e-28, c=3e10):
-    '''
-    Returns the value of gamma that results from the gyro-radius formula.
-    Default values are in cgs units
-
-            Parameters:
-                    R (float): The gyro-radius
-                    B (float): The magnetic field
-                    q (float): The electric charge
-                    m (float): The mass of the charge
-                    c (float): The speed of light
-    '''
-    return R * B * q / (m * c)
-
-
-def gamma_(log_gamma, log_R, log_B, base=10):
-    '''
-    Wrapper function that converts from the reference log_base values and 
-    returns a tuple of (min max) values
-
-            Parameters:
-                    log_gamma (float): Reference log_gamma
-                    log_R (float): Reference log_R
-                    log_B (float): Reference log_B
-                    base (float): The log base, default value is 10
-    '''
-    g = np.power(base, log_gamma)
-    R = np.power(base, log_R)
-    B = np.power(base, log_B)
-    v_min = gamma_min(g)
-    v_max = gamma_max(R, B)
+    v_min = 2 + loggamma
+    logc = np.log(q / (m*c)) / np.log(base)
+    v_max = logR + logB + logc
     return v_min, v_max
 
 
@@ -96,10 +78,9 @@ def generate_sample_inputs(N, out):
         p[i]             = limits['p']()
         
         # Special handling - depends on gamma_min, R and B
-        log_gamma_max[i] = sample(*gamma_(log_gamma_min[i], 
-                                         log_R[i],
-                                         log_B[i])
-                                  )()
+        log_gamma_max[i] = sample(*log_gamma_range(log_gamma_min[i],
+                                                   log_R[i],
+                                                   log_B[i]))()
     
     
     # Store arrays in a dataframe
@@ -112,7 +93,8 @@ def generate_sample_inputs(N, out):
     df['p'] = p
     
     # write to file
-    df.to_csv(out, index=True, float_format='%.6e', line_terminator='\n')
+    df.to_csv(out, index=True, index_label='run',
+              float_format='%.6e', line_terminator='\n')
     
 
 
