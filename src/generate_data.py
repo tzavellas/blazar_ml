@@ -59,7 +59,7 @@ def generate_sample_inputs(N, out):
     # Dictionary of sampling callables
     limits = {'log_R'       : sample(14, 17),
               'log_B'       : sample(-2, 2),
-              'log_gamma'   : sample(0, 4),
+              'log_gamma'   : sample(0.1, 4),
               'log_le'      : sample(-5, -1),
               'p'           : sample(1.5, 4)
               }
