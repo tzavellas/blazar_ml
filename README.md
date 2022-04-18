@@ -5,8 +5,7 @@
 ## Installation
 
 ### Windows
-Use conda to install a new environment.
-
+Using Anaconda:
 ```bash
 # Create a new environment
 conda create -y --name hea_ml
@@ -19,6 +18,7 @@ conda install -y astropy numpy pandas
 ```
 
 ### Linux
+Using pip:
 ```bash
 # Install virtualenv
 pip install virtualenv
@@ -34,19 +34,17 @@ pip install -y astropy numpy pandas
 ```
 
 ## Usage
-
 ```bash
 python src/generate_data.py
 ```
 
 ## Removal
 ### Windows
-Use conda to remove the environment.
 ```bash
+conda deactivate
 conda remove --name hea_ml --all
 ```
 ### Linux
-Use conda to remove the environment.
 ```bash
 deactivate
 rm -rf hea_ml
