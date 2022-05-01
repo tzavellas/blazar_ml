@@ -21,7 +21,7 @@ conda install -y astropy numpy pandas
 Using pip:
 ```bash
 # Install virtualenv
-pip install virtualenv
+sudo apt install virtualenv
 
 # Create a new environment
 virtualenv hea_ml
@@ -30,12 +30,13 @@ virtualenv hea_ml
 source hea_ml/bin/activate
 
 # Install dependencies
-pip install -y astropy numpy pandas
+pip install astropy numpy pandas
 ```
 
 ## Usage
 ```bash
-python src/generate_data.py
+python src/prepare_inputs.py
+python src/generate_dataset.py --input out.csv
 ```
 
 ## Removal

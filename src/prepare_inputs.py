@@ -7,6 +7,13 @@ import argparse
 from astropy import constants as const
 
 
+RADIUS      = 'radius'
+BFIELD      = 'bfield'
+GAMMA       = 'geext'
+GAMMA_MIN   = 'geextmn'
+GAMMA_MAX   = 'geextmx'
+LE          = 'exlumel'
+P           = 'belesc'
 
 class sample():
     def __init__(self, low, high, f_sample=np.random.uniform):
@@ -19,30 +26,28 @@ class sample():
     
 
 
-def log_gamma_range(loggamma, logR, logB, 
+def log_gamma_range(gamma, radius, bfield, 
                     base=10, 
                     q=const.e.esu.value,
                     m=const.m_e.cgs.value, 
                     c=const.c.cgs.value):
     '''
-    Function that calculates the range of the log_gamma_max values given the a
-    loggamma value
-
+    Function that calculates the range of the geext values given the a gamma value
             Parameters:
-                    loggamma (float): Reference loggamma
-                    logR (float): Reference logR
-                    logB (float): Reference logB
+                    gamma (float): Reference logarithm gamma
+                    radius (float): Reference logarithm radius
+                    bfield (float): Reference logarithm bfield
                     base (float): The logarithm base, default value is 10
                     q (float): The electric charge, default value in cgs
                     m (float): The mass of the charge. default value in cgs
                     c (float): The speed of light, default value in cgs
     '''
-    v_min = 2 + loggamma
+    v_min = 2 + gamma
     logc = np.log(q / (m*c**2)) / np.log(base)
-    v_max = logR + logB + logc
+    v_max = radius + bfield + logc
     # set a hard upper limit based on code performance
-    if v_max > 8.: 
-        v_max = 8.
+    v_max = min(v_max, 8.)
+
     return v_min, v_max
 
 
@@ -57,43 +62,41 @@ def generate_sample_inputs(N, out):
     '''
     
     # Dictionary of sampling callables
-    limits = {'log_R'       : sample(14, 17),
-              'log_B'       : sample(-2, 2),
-              'log_gamma'   : sample(0.1, 4),
-              'log_le'      : sample(-5, -1),
-              'p'           : sample(1.5, 4)
+    limits = {RADIUS    : sample(14, 17),
+              BFIELD    : sample(-2, 2),
+              GAMMA     : sample(0.1, 4),
+              LE        : sample(-5, -1),
+              P         : sample(1.5, 4)
               }
 
     # Pre-allocate arrays of samples
-    log_R           = np.zeros(N)
-    log_B           = np.zeros(N)
-    log_gamma_min   = np.zeros(N)
-    log_gamma_max   = np.zeros(N)
-    log_le          = np.zeros(N)
-    p               = np.zeros(N)
+    radius          = np.zeros(N)
+    bfield          = np.zeros(N)
+    geextmn         = np.zeros(N)
+    geextmx         = np.zeros(N)
+    exlumel         = np.zeros(N)
+    belesc          = np.zeros(N)
     
     for i in range(N):
         # Draw samples from each distribution
-        log_R[i]         = limits['log_R']()
-        log_B[i]         = limits['log_B']()
-        log_gamma_min[i] = limits['log_gamma']()
-        log_le[i]        = limits['log_le']()
-        p[i]             = limits['p']()
+        radius[i]       = limits[RADIUS]()
+        bfield[i]       = limits[BFIELD]()
+        geextmn[i]      = limits[GAMMA]()
+        exlumel[i]      = limits[LE]()
+        belesc[i]       = limits[P]()
         
         # Special handling - depends on gamma_min, R and B
-        log_gamma_max[i] = sample(*log_gamma_range(log_gamma_min[i],
-                                                   log_R[i],
-                                                   log_B[i]))()
+        geextmx[i] = sample(*log_gamma_range(geextmn[i], radius[i], bfield[i]))()
     
     
     # Store arrays in a dataframe
     df = pd.DataFrame()
-    df['log_R'] = log_R
-    df['log_B'] = log_B
-    df['log_gamma_min'] = log_gamma_min
-    df['log_gamma_max'] = log_gamma_max
-    df['log_le'] = log_le
-    df['p'] = p
+    df[RADIUS]      = radius
+    df[BFIELD]      = bfield
+    df[GAMMA_MIN]   = geextmn
+    df[GAMMA_MAX]   = geextmx
+    df[LE]          = exlumel
+    df[P]           = belesc
     
     # write to file
     df.to_csv(out, index=True, index_label='run',
