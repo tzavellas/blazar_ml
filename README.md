@@ -36,7 +36,7 @@ pip install astropy numpy pandas
 ## Usage
 ```bash
 python src/prepare_inputs.py
-python src/generate_dataset.py --input out.csv
+python src/generate_dataset.py --executable /path/to/program --input out.csv
 ```
 
 ## Removal

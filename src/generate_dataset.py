@@ -45,15 +45,20 @@ def create_input_file(inputs, working_dir='./', input_file='code.inp'):
 
     # open file
     with open(file_path, 'w') as f:
+        values = ''
+        keys = ''
         for row in inputs:
-            line = ''  # each row in a different line for readability
             for key, value in row.items():
+                keys = keys + ' {}'.format(key)
                 if key in keys_scientific:
                     # print exponential with 2 decimal
-                    line = line + ' {} {:.2e}'.format(key, value)
+                    values = values + ' {:.2e}'.format(value)
                 else:
-                    line = line + ' {} {}'.format(key, value)
-            print(line, file=f)
+                    values = values + ' {}'.format(value)
+            keys = keys + '\n'
+            values = values + '\n'
+        print(values, file=f) # print values at the begining of the file
+        print(keys, file=f)   # print keys at the end of the file
     f.close()
 
     return file_path
@@ -95,20 +100,25 @@ def create_output_directory(run_id, working_dir='./'):
     return output_dir
 
 
-def execute_input(input_file, output_dir):
+def execute_input(executable_path, input_file, output_dir, extra_args):
     '''
     Launches a new process.
             Parameters:
+                    executable_path (str): Full path to the program executable
                     input_file (str): The input file parameters of the program
                     output_dir (str): The program output directory
+                    extra_args (list): List of extra program arguments
     '''
     # Create shell command
-    cmd_args = ['echo', input_file]
+    cmd_args = [executable_path, input_file]
+    for arg in extra_args:
+        cmd_args.append(arg)
 
     try:
         os.chdir(output_dir)
-        output = subprocess.run(cmd_args, capture_output=True).stdout
-        print(output)
+        with open('stdout.txt', 'w') as f:
+            output = subprocess.run(cmd_args, capture_output=True).stdout
+            print(output, file=f)
     except OSError as e:
         print("Error: {} : {}".format(output_dir, e.strerror))
 
@@ -118,10 +128,14 @@ def execute_input(input_file, output_dir):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Generates the dataset given a sample of the input space')
-    parser.add_argument('--input', required=True, type=str,
+    parser.add_argument('-e', '--executable', type=str, required=True,
+                        help='Full path to the program executable')
+    parser.add_argument('-i', '--input', type=str, required=True,
                         help='CSV file with the a sample of the input space')
-    parser.add_argument('--working-dir', default='output',
-                        type=str, help='Root path where the datase will be stored')
+    parser.add_argument('-w', '--working-dir', type=str, default='output',
+                        help='Root path where the dataset will be stored')
+    parser.add_argument('-x', '--extra-args', default=[], nargs='*',
+                        help='List of extra arguments to pass to the program')
 
     try:
         args = parser.parse_args()
@@ -139,7 +153,7 @@ if __name__ == "__main__":
 
             input_file = create_input_file(input_dict, output_dir)
 
-            params.append((input_file, output_dir))
+            params.append((args.executable, input_file, output_dir, args.extra_args))
 
         with Pool(processes=None) as pool:
             pool.starmap(execute_input, params)
