@@ -13,7 +13,7 @@ GAMMA       = 'geext'
 GAMMA_MIN   = 'geextmn'
 GAMMA_MAX   = 'geextmx'
 LE          = 'exlumel'
-P           = 'belesc'
+P           = 'slelints'
 
 class sample():
     def __init__(self, low, high, f_sample=np.random.uniform):
@@ -75,7 +75,7 @@ def generate_sample_inputs(N, out):
     geextmn         = np.zeros(N)
     geextmx         = np.zeros(N)
     exlumel         = np.zeros(N)
-    belesc          = np.zeros(N)
+    slelints        = np.zeros(N)
     
     for i in range(N):
         # Draw samples from each distribution
@@ -83,7 +83,7 @@ def generate_sample_inputs(N, out):
         bfield[i]       = limits[BFIELD]()
         geextmn[i]      = limits[GAMMA]()
         exlumel[i]      = limits[LE]()
-        belesc[i]       = limits[P]()
+        slelints[i]     = limits[P]()
         
         # Special handling - depends on gamma_min, R and B
         geextmx[i] = sample(*log_gamma_range(geextmn[i], radius[i], bfield[i]))()
@@ -96,7 +96,7 @@ def generate_sample_inputs(N, out):
     df[GAMMA_MIN]   = geextmn
     df[GAMMA_MAX]   = geextmx
     df[LE]          = exlumel
-    df[P]           = belesc
+    df[P]           = slelints
     
     # write to file
     df.to_csv(out, index=True, index_label='run',

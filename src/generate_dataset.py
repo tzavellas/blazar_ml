@@ -21,7 +21,7 @@ inputs_template = [
     {'slpinj': 2., 'slninj': 2., 'sleinj': 2.5, 'slginj': 2., 'slntinj': 2.},
     {'radius': None, 'bfield': None},
     {'iprext': 0, 'gpextmn': 5.21, 'gpextmx': 5.41, 'slprints': 2.01, 'exlumpr': -1.6, 'bpresc': 1., 'ap': 0., 'ipexp': 0},
-    {'ielext': 1, 'geextmn': None, 'geextmx': None, 'slelints': 1.2, 'exlumel': None, 'belesc': None, 'ae': 0., 'ieexp': 0},
+    {'ielext': 1, 'geextmn': None, 'geextmx': None, 'slelints': None, 'exlumel': None, 'belesc': 1., 'ae': 0., 'ieexp': 0},
     {'iphotext': 0, 'temperat': 1e6, 'exlumth': 8.1e-6},
     {'iphotext2': 0, 'x1': 1e-4, 'x2': 1.5e-4, 'xbr': 1.5e-4, 'beta1': 2., 'beta2': 2., 'extph0': 1e-1},
     {'ielextbr': 0, 'geextbr': 4.01, 'slelints1': 1.6, 'slelints2': 4.5, 'ae2': 1.},
@@ -111,6 +111,8 @@ def execute_input(executable_path, input_file, output_dir, extra_args):
     '''
     # Create shell command
     cmd_args = [executable_path, input_file]
+    
+    # Appends extra args to command, if any
     for arg in extra_args:
         cmd_args.append(arg)
 
@@ -153,7 +155,8 @@ if __name__ == "__main__":
 
             input_file = create_input_file(input_dict, output_dir)
 
-            params.append((args.executable, input_file, output_dir, args.extra_args))
+            params.append((os.realpath(args.executable), input_file, 
+                           output_dir, args.extra_args))
 
         with Pool(processes=None) as pool:
             pool.starmap(execute_input, params)
