@@ -110,7 +110,8 @@ def execute_input(executable_path, input_file, output_dir, extra_args):
                     extra_args (list): List of extra program arguments
     '''
     # Create symbolic link in the output dir
-    executable_link = '{}/{}'.format(output_dir, executable_path)
+    base_name = os.path.basename(executable_path)
+    executable_link = '{}/{}'.format(output_dir, base_name)
     os.symlink(executable_path, executable_link)
     
     # Create shell command
@@ -149,6 +150,11 @@ if __name__ == "__main__":
         print('parse_args: {}'.format(arg_e))
         sys.exit(1)
 
+    exec_path = args.executable
+    if not os.path.exists(exec_path):
+        print('Path {} does not exist'.format(exec_path))
+        sys.exit(1)
+
     try:
         inputs = pd.read_csv(args.input)
         params = []
@@ -159,7 +165,7 @@ if __name__ == "__main__":
 
             input_file = create_input_file(input_dict, output_dir)
 
-            params.append((os.realpath(args.executable), input_file, 
+            params.append((os.path.realpath(exec_path), input_file, 
                            output_dir, args.extra_args))
 
         with Pool(processes=None) as pool:
