@@ -109,8 +109,12 @@ def execute_input(executable_path, input_file, output_dir, extra_args):
                     output_dir (str): The program output directory
                     extra_args (list): List of extra program arguments
     '''
+    # Create symbolic link in the output dir
+    executable_link = '{}/{}'.format(output_dir, executable_path)
+    os.symlink(executable_path, executable_link)
+    
     # Create shell command
-    cmd_args = [executable_path, input_file]
+    cmd_args = [executable_link, input_file]
     
     # Appends extra args to command, if any
     for arg in extra_args:
