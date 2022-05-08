@@ -1,0 +1,144 @@
+#!/usr/bin/python
+
+import argparse
+import matplotlib.pyplot as plt
+import os
+import pandas as pd
+import sys
+
+
+plot_fname              = 'plot'
+program_output_fname    = 'fort.81'
+steady_state_fname      = 'steady_state.csv'
+
+
+def extract_steady_state(file):
+    '''
+    Reads an output file and extracts the steady state values.
+        Parameters:
+            file (str) : The fort.81 file
+    '''
+    x = []
+    y = []
+    with open(file) as f:
+        for line in f:                      # read line by line
+            tokens = line.rstrip().split()  # tokenize line
+            if len(tokens) == 4:            # new block starts
+                x.clear()
+                y.clear()
+                continue
+            else:                           # same block
+                x.append(float(tokens[0]))
+                y.append(float(tokens[1]))
+    return x, y
+
+
+def save_spectrum(x, y, file, labels=('x', 'x^2*n(x)')):
+    '''
+    Saves x and y in a csv file.
+        Parameters:
+            x (list):               x-axis values
+            y (list):               y-axis values
+            file (str):             File path to save the data.
+            labels (tuple):         The labels of the csv columns. Default x -> "x",  y -> "x^2*n(x)"
+    '''
+    df = pd.DataFrame()
+    df[labels[0]] = x
+    df[labels[1]] = y
+    df.to_csv(file, index=True, index_label='i',
+              float_format='%.6e', line_terminator='\n')
+    return
+
+
+def plot_spectrum(x, y, id, labels=(r'$x$', r'$x^2 \cdot n(x)$'), marker=3, file=None):
+    '''
+    Plots x and y. If a file path is passed it saves the plot to the file path.
+        Parameters:
+            x (list):               x-axis values.
+            y (list):               y-axis values.
+            id (int):               Used to label the plot as "run <id>".
+            labels(tuple):          The labels of the x and y axis. Default x -> "x", y -> "x^2 * n(x)".
+            marker(int):            Marker size. Default 3.
+            file (str):             File path to save the plot. Default None -> does not save the figure.
+    '''
+    plt.plot(x, y, '.', markersize=marker, label='{}'.format(id))
+    plt.xlabel(labels[0])
+    plt.ylabel(labels[1])
+    plt.title(r'run {}'.format(id))
+    if file is not None:
+        plt.savefig(file)
+    return
+
+
+def write_spectrum(df, id, marker=3):
+    '''
+    Wrapper function. Given a fort.81 file, extracts the steady state spectrum, saves it in a CSV file and plots it.
+        Parameters:
+            df (pandas.Dataframe):  Dataframe of the current .
+            id (int):               Used to label the plot in the legend.
+            marker(int):            Marker size. Default 3.
+    '''
+    x = df['x']
+    y = df['x^2*n(x)']
+    plt.plot(x, y, '.', markersize=marker, label='{}'.format(id))
+    
+    return
+
+
+def save(id, working_dir, img_format):
+    '''
+    Wrapper function. Given a fort.81 file, extracts the steady state spectrum, saves it in a CSV file and plots it.
+        Parameters:
+            id (int):               run id of the execution.
+            working_dir (str):      The working directory.
+            img_format (str):       Image format of the spectrum plot.
+    '''
+    fort81  = '{}/{}'.format(working_dir, program_output_fname)
+    img     = '{}/{}.{}'.format(working_dir, plot_fname, img_format)
+    ss      = '{}/{}'.format(working_dir, steady_state_fname)
+
+    x, y = extract_steady_state(fort81)
+    save_spectrum(x, y, file=ss)
+    plot_spectrum(x, y, id, file=img)
+    return
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description='Plots spectra in a single file')
+    parser.add_argument('-o', '--output', default='spectra',
+                        type=str, help='Aggregate plot of all spectra')
+    parser.add_argument('-w', '--working-dir', default='output',
+                        type=str, help='Root path where the individual spectra are stored')
+    parser.add_argument('-f', '--format', type=str, default='png',
+                        help='Spectrum image format. Default is png')
+    parser.add_argument('--legend', action='store_true', default=False,
+                        help='Adds legend to the spectra plot')
+
+    try:
+        args = parser.parse_args()
+    except argparse.ArgumentError as arg_e:
+        print('parse_args: {}'.format(arg_e))
+        sys.exit(1)
+    
+    dir = os.fsencode(args.working_dir)
+    
+    for file in os.listdir(dir):
+        run_id = os.fsdecode(file)
+        scenario = '{}/{}/steady_state.csv'.format(args.working_dir, run_id)
+        
+        try:
+            df = pd.read_csv(scenario)
+        except BaseException as e:
+            print('read_csv: {}'.format(e), file=sys.stderr)
+            sys.exit(1)
+        
+        write_spectrum(df, run_id)
+
+    if args.legend:
+        plt.legend()
+    
+    output = '{}.{}'.format(args.output, args.format)
+    plt.savefig(output, format=args.format)
+
+    sys.exit(0)

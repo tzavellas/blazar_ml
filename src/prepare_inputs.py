@@ -1,10 +1,10 @@
 #!/usr/bin/python
 
-
+from astropy import constants as const
+import argparse
 import numpy as np
 import pandas as pd
-import argparse
-from astropy import constants as const
+import sys
 
 
 RADIUS      = 'radius'
@@ -25,7 +25,6 @@ class sample():
         return self.f_sample(self.low, self.high)
     
 
-
 def log_gamma_range(gamma, radius, bfield, 
                     base=10, 
                     q=const.e.esu.value,
@@ -33,14 +32,14 @@ def log_gamma_range(gamma, radius, bfield,
                     c=const.c.cgs.value):
     '''
     Function that calculates the range of the geext values given the a gamma value
-            Parameters:
-                    gamma (float): Reference logarithm gamma
-                    radius (float): Reference logarithm radius
-                    bfield (float): Reference logarithm bfield
-                    base (float): The logarithm base, default value is 10
-                    q (float): The electric charge, default value in cgs
-                    m (float): The mass of the charge. default value in cgs
-                    c (float): The speed of light, default value in cgs
+        Parameters:
+            gamma (float):          Reference logarithm gamma
+            radius (float):         Reference logarithm radius
+            bfield (float):         Reference logarithm bfield
+            base (float):           The logarithm base, default value is 10
+            q (float):              The electric charge, default value in cgs
+            m (float):              The mass of the charge. default value in cgs
+            c (float):              The speed of light, default value in cgs
     '''
     v_min = 2 + gamma
     logc = np.log(q / (m*c**2)) / np.log(base)
@@ -55,12 +54,10 @@ def generate_sample_inputs(N, out):
     '''
     Creates a csv file with a number of input parameters for the SSC model 
     execution.
-
-            Parameters:
-                    N (int): Number of inputs
-                    out (str): The name of the output file
+        Parameters:
+            N (int):                Number of inputs
+            out (str):              The name of the output file
     '''
-    
     # Dictionary of sampling callables
     limits = {RADIUS    : sample(14, 17),
               BFIELD    : sample(-2, 2),
@@ -102,16 +99,22 @@ def generate_sample_inputs(N, out):
     df.to_csv(out, index=True, index_label='run',
               float_format='%.6e', line_terminator='\n')
     
-
+    return
+    
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generates a sample of the input space')
-    parser.add_argument('--size', default=10, type=int, help='Size of the sample')
-    parser.add_argument('--out', default='out.csv', type=str, help='Output file')
+    parser.add_argument('-s', '--size', type=int, default=10, 
+                        help='Size of the sample')
+    parser.add_argument('-o', '--out', type=str, default='out.csv', 
+                        help='Output file in csv format')
     
     try:
         args = parser.parse_args()
-        generate_sample_inputs(args.size, args.out)
     
     except argparse.ArgumentError:
-        print('Error parsing arguments')
+        print('Error parsing arguments', file=sys.stderr)
+        sys.exit(1)
+
+    generate_sample_inputs(args.size, args.out)
+    sys.exit(0)

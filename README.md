@@ -14,7 +14,7 @@ conda create -y --name hea_ml
 conda activate hea_ml
 
 # Install dependencies
-conda install -y astropy numpy pandas
+conda install -y astropy numpy pandas matplotlib
 ```
 
 ### Linux
@@ -30,7 +30,7 @@ virtualenv hea_ml
 source hea_ml/bin/activate
 
 # Install dependencies
-pip install astropy numpy pandas
+pip install autopep8 astropy matplotlib numpy pandas
 ```
 
 ## Usage

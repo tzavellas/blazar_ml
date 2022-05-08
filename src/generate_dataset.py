@@ -5,13 +5,21 @@ import subprocess
 import argparse
 import os
 import pandas as pd
+import re
 import shutil
 import sys
+import plot_spectra
 
- 
+elapsed_key = 'elapsed_time'
+success_key = 'success'
+run_key = 'run'
+
 # Set of input keys that normaly are given in scientific notation
 keys_scientific = set(['tol', 'temperat', 'exlumth',
                       'x1', 'x2', 'xbr', 'extph0', ])
+
+# Set of csv keys to ignore while creating input dictionary
+ignored_keys = set([elapsed_key, run_key, success_key])
 
 
 # Dictionary with all possible program inputs. Keys with value None must be defined.
@@ -32,22 +40,72 @@ inputs_template = [
 ]
 
 
-def create_input_file(inputs, working_dir='./', input_file='code.inp'):
+def create_output_directory(run_id, working_dir=os.getcwd()):
     '''
-    Compiles the absolute file name and writes it
-            Parameters:
-                    inputs (dict): all the input parameters of the program
-                    working_dir (str): The working directory, default is ./
-                    input_file (float): The input file of the program
+    Creates the output directory
+        Parameters:
+            run_id (str):                   The id of the output directory
+            working_dir (str):              The working directory. Default is the current working directory
+    '''
+    output_dir = os.path.realpath(working_dir + '/{}'.format(int(run_id)))
+
+    if os.path.exists(output_dir):  # remove output_dir if it exists
+        shutil.rmtree(output_dir)
+    try:
+        os.makedirs(output_dir)
+    except OSError as e:
+        print("Error: {} : {}".format(output_dir, e.strerror))
+
+    return output_dir
+
+
+def create_program_link(executable_path, dest_dir):
+    '''
+    Create symbolic link in the destination directory.
+        Parameters:
+            executable_path (str):          Full path to the program executable.
+            dest_dir (str):                 The destination directory.
+    '''
+    base_name = os.path.basename(executable_path)
+    link = '{}/{}'.format(dest_dir, base_name)
+    os.symlink(executable_path, link)
+    return link
+
+
+def create_input_dictionary(input_series):
+    '''
+    Creates a dictionary with the all the input parameters of the program
+        Parameters:
+            input_series (pandas.Series):   A subset of all possible input parameters.
+    '''
+    input_dict = inputs_template  # copy template
+
+    for index, value in input_series.iteritems():
+        if index not in ignored_keys:
+            for row in input_dict:
+                if index in row:  # replace values that exist in input_series
+                    row[index] = value
+
+    return input_dict
+
+
+def create_program_input(input_series, working_dir, input_fname='code.inp'):
+    '''
+    Compiles the absolute path of the input file of the program and writes it to disk.
+        Parameters:
+            input_series (pandas.Series):   A subset of all possible input parameters.
+            working_dir (str):              The working directory.
+            input_fname (str):              The name of the input file of the program. Default is "code.inp".
     '''
     # input file path name
-    file_path = os.path.realpath(working_dir + '/{}'.format(input_file))
+    input_file = os.path.realpath(working_dir + '/{}'.format(input_fname))
 
     # open file
-    with open(file_path, 'w') as f:
+    with open(input_file, 'w') as f:
+        input_dict = create_input_dictionary(input_series)
         values = ''
         keys = ''
-        for row in inputs:
+        for row in input_dict:
             for key, value in row.items():
                 keys = keys + ' {}'.format(key)
                 if key in keys_scientific:
@@ -59,77 +117,87 @@ def create_input_file(inputs, working_dir='./', input_file='code.inp'):
             values = values + '\n'
         print(values, file=f) # print values at the begining of the file
         print(keys, file=f)   # print keys at the end of the file
-    f.close()
 
-    return file_path
+    return input_file
 
 
-def init_input_dict(input_series):
+def launch_process(executable, input_file, extra_args, output_dir):
     '''
-    Creates a dictionary with the all the input parameters of the program
-            Parameters:
-                    input_series (pandas.Series): Values of a subset of the input parameters
+    Launches a program instance. Program stdout is stored in a file "stdout.txt".
+        Parameters:
+            executable (str):       Program executable.
+            input_file (str):       Program input file.
+            extra_args (str):       Program extra arguments.
+            output_dir (str):       Program output directory.
     '''
-    input_dict = inputs_template  # copy template
+    cmd_args = [executable, input_file]     # Create shell command
+    for arg in extra_args:
+        cmd_args.append(arg)                # Appends extra_args to command, if any
 
-    for index, value in input_series.iteritems():
-        if index != 'run':        # ignore the key run
-            for row in input_dict:
-                if index in row:  # replace values that exist in input_series
-                    row[index] = value
-
-    return input_dict
-
-
-def create_output_directory(run_id, working_dir='./'):
-    '''
-    Creates the output directory
-            Parameters:
-                    run_id (str): The id of the output directory
-                    working_dir (str): The working directory, default is ./
-    '''
-    output_dir = os.path.realpath(working_dir + '/{}'.format(int(run_id)))
-
-    if os.path.exists(output_dir):
-        shutil.rmtree(output_dir)  # remove output_dir if it exists
     try:
-        os.makedirs(output_dir)
+        os.chdir(output_dir)                # Change to output directory
+
+        with open('stdout.txt', 'w') as f:
+            stream = subprocess.run(cmd_args, capture_output=True).stdout
+            stream = stream.decode("utf-8")
+            print(stream, file=f)           # Store stdout in a file for future reference
     except OSError as e:
         print("Error: {} : {}".format(output_dir, e.strerror))
 
-    return output_dir
+    return stream
 
 
-def execute_input(executable_path, input_file, output_dir, extra_args):
+def parse_stream(stream, id):
+    '''
+    Parses stdout. Detects unsuccessful execution and extracts execution time.
+        Parameters:
+            stream (str):                   Program stdout stream.
+            id (int):                       Run id of the current execution.
+    '''
+    overflow = stream.find('overflow!!!')           # search stream for overflow
+    integration_fail = stream.find('IFAIL=2')       # search stream for IFAIL
+    if (overflow == -1) and (integration_fail == -1):
+        success = True
+    else:
+        print('Run {} failed'.format(id), file=sys.stderr)
+        success = False
+    
+    pattern = 'Elapsed CPU time\D+(\d+\.\d+)'       # regex pattern
+    match = re.search(pattern, stream)              # Find pattern
+    if match:
+        elapsed_time = float(match.group(1))
+    else:
+        print('Elapsed time pattern not found', file=sys.stderr)
+        elapsed_time = .0
+
+    return success, elapsed_time
+
+
+def run_scenario(executable_path, input_series, id, working_dir, img_format, extra_args):
     '''
     Launches a new process.
-            Parameters:
-                    executable_path (str): Full path to the program executable
-                    input_file (str): The input file parameters of the program
-                    output_dir (str): The program output directory
-                    extra_args (list): List of extra program arguments
+        Parameters:
+            executable_path (str):          Full path to the program executable.
+            input_series (pandas.series):   The input file parameters of the program.
+            id (int):                       Run id.
+            working_dir (str):              The working directory.
+            img_format (str):               Image format of the spectra plots.
+            extra_args (list):              List of extra program arguments.
     '''
-    # Create symbolic link in the output dir
-    base_name = os.path.basename(executable_path)
-    executable_link = '{}/{}'.format(output_dir, base_name)
-    os.symlink(executable_path, executable_link)
+    out_dir = create_output_directory(id, working_dir)
     
-    # Create shell command
-    cmd_args = [executable_link, input_file]
+    link = create_program_link(executable_path, out_dir)
     
-    # Appends extra args to command, if any
-    for arg in extra_args:
-        cmd_args.append(arg)
+    program_input = create_program_input(input_series, out_dir)
 
-    try:
-        os.chdir(output_dir)
-        with open('stdout.txt', 'w') as f:
-            output = subprocess.run(cmd_args, capture_output=True).stdout
-            print(output, file=f)
-    except OSError as e:
-        print("Error: {} : {}".format(output_dir, e.strerror))
+    out_stream = launch_process(link, program_input, extra_args, out_dir)
 
-    return
+    success, elapsed_time = parse_stream(out_stream, id)
+
+    if success:
+        plot_spectra.save(id, out_dir, img_format)
+
+    return id, success, elapsed_time
 
 
 if __name__ == "__main__":
@@ -141,38 +209,58 @@ if __name__ == "__main__":
                         help='CSV file with the a sample of the input space')
     parser.add_argument('-w', '--working-dir', type=str, default='output',
                         help='Root path where the dataset will be stored')
+    parser.add_argument('-f', '--format', type=str, default='png',
+                        help='Spectrum image format. Default is png')
+    parser.add_argument('-n', '--num-proc', type=int, default=None,
+                        help='Number of process to launch. Default is number of system threads')
+    parser.add_argument('--overwrite-input', action='store_true', default=False,
+                        help='Overwrites input CSV')
     parser.add_argument('-x', '--extra-args', default=[], nargs='*',
                         help='List of extra arguments to pass to the program')
 
     try:
         args = parser.parse_args()
     except argparse.ArgumentError as arg_e:
-        print('parse_args: {}'.format(arg_e))
+        print('parse_args: {}'.format(arg_e), file=sys.stderr)
         sys.exit(1)
 
     exec_path = args.executable
     if not os.path.exists(exec_path):
-        print('Path {} does not exist'.format(exec_path))
+        print('Executable {} does not exist'.format(exec_path), file=sys.stderr)
         sys.exit(1)
 
     try:
         inputs = pd.read_csv(args.input)
-        params = []
-        for row in range(inputs.shape[0]):
-            output_dir = create_output_directory(row, args.working_dir)
-
-            input_dict = init_input_dict(inputs.iloc[row])
-
-            input_file = create_input_file(input_dict, output_dir)
-
-            params.append((os.path.realpath(exec_path), input_file, 
-                           output_dir, args.extra_args))
-
-        with Pool(processes=None) as pool:
-            pool.starmap(execute_input, params)
-
+        inputs.insert(1, success_key, "False")       # add two extra columns
+        inputs.insert(2, elapsed_key, 0.0)
     except BaseException as e:
-        print('read_csv: {}'.format(e))
+        print('read_csv: {}'.format(e), file=sys.stderr)
         sys.exit(1)
+
+    params = []
+    for row in range(inputs.shape[0]):
+        params.append((
+            exec_path, 
+            inputs.iloc[row], 
+            row,
+            args.working_dir, 
+            args.format, 
+            args.extra_args))
+
+    with Pool(processes=args.num_proc) as pool:
+        result = pool.starmap(run_scenario, params)
+    
+    for row, success, elapsed_time in result:
+        inputs.at[row, success_key] = success
+        inputs.at[row, elapsed_key] = elapsed_time
+
+    if args.overwrite_input:
+        out_csv = args.input
+    else:
+        basename = os.path.basename(args.input).split('.')[0]
+        dirname = os.path.dirname(args.input)
+        out_csv = '{}/{}_extended.csv'.format(dirname, basename)
+        
+    inputs.to_csv(out_csv, index=None)
 
     sys.exit(0)
