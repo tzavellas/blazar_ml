@@ -50,7 +50,7 @@ def save_spectrum(x, y, file, labels=('x', 'x^2*n(x)')):
     return
 
 
-def plot_spectrum(x, y, id, labels=(r'$x$', r'$x^2 \cdot n(x)$'), marker=3, file=None):
+def plot_spectrum(x, y, id, labels=(r'$x$', r'$x^2 \cdot n(x)$'), marker=3, lwidth=1, file=None):
     '''
     Plots x and y. If a file path is passed it saves the plot to the file path.
         Parameters:
@@ -61,16 +61,18 @@ def plot_spectrum(x, y, id, labels=(r'$x$', r'$x^2 \cdot n(x)$'), marker=3, file
             marker(int):            Marker size. Default 3.
             file (str):             File path to save the plot. Default None -> does not save the figure.
     '''
-    plt.plot(x, y, '.', markersize=marker, label='{}'.format(id))
+#     plt.plot(x, y, '.', markersize=marker, label='{}'.format(id))
+    plt.plot(x, y, ls='-', lw=lwith, label='{}'.format(id))
     plt.xlabel(labels[0])
     plt.ylabel(labels[1])
+    plt.ylimt(-16,0)
     plt.title(r'run {}'.format(id))
     if file is not None:
         plt.savefig(file)
     return
 
 
-def write_spectrum(df, id, marker=3):
+def write_spectrum(df, id, marker=3, lwidth=1):
     '''
     Wrapper function. Given a fort.81 file, extracts the steady state spectrum, saves it in a CSV file and plots it.
         Parameters:
@@ -80,8 +82,8 @@ def write_spectrum(df, id, marker=3):
     '''
     x = df['x']
     y = df['x^2*n(x)']
-    plt.plot(x, y, '.', markersize=marker, label='{}'.format(id))
-    
+#     plt.plot(x, y, '.', markersize=marker, label='{}'.format(id))
+    plt.plot(x, y, ls='-', lw=lwidth, label='{}'.format(id))
     return
 
 
