@@ -64,7 +64,7 @@ def plot_spectrum(x, y, id, labels=(r'$x$', r'$x^2 \cdot n(x)$'), marker=3, lwid
     plt.plot(x, y, ls='-', lw=lwidth, label='{}'.format(id))
     plt.xlabel(labels[0])
     plt.ylabel(labels[1])
-    plt.ylimt(-16,0)
+    plt.ylim(-16,0)
     plt.title(r'run {}'.format(id))
     if file is not None:
         plt.savefig(file)
@@ -82,7 +82,7 @@ def write_spectrum(df, id, marker=3, lwidth=1):
     x = df['x']
     y = df['x^2*n(x)']
     plt.plot(x, y, ls='-', lw=lwidth, label='{}'.format(id))
-    plt.ylimt(-16,0)
+    plt.ylim(-16,0)
     return
 
 
