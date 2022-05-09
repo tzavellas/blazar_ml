@@ -214,8 +214,10 @@ if __name__ == "__main__":
                         help='Spectrum image format. Default is png.')
     parser.add_argument('-n', '--num-proc', type=int, default=None,
                         help='Number of processes to launch. Default is number of system threads')
-    parser.add_argument('--overwrite-input', action='store_true', default=False,
+    parser.add_argument('-r','--overwrite-input', action='store_true', default=False,
                         help='Overwrites input CSV. Default is false')
+    parser.add_argument('-p', '--plot-spectra', action='store_true', default=True,
+                        help='Aggregate plot of all spectra in a file "spectra.png". Default is True.')
     parser.add_argument('-x', '--extra-args', default=[], nargs='*',
                         help='List of extra arguments to pass to the program. Default is [].')
 
@@ -278,4 +280,10 @@ if __name__ == "__main__":
         
     inputs.to_csv(out_csv, index=None)
 
-    sys.exit(0)
+    if args.plot_spectra:
+        spectra = '{}/spectra'.format(args.working_dir)
+        err = plot_spectra.aggregate_plots(spectra, args.working_dir, args.format, True)
+        if  err != 0:
+            print('Error plotting aggregate spectrum {}'.format(spectra), file=sys.stderr)
+
+    sys.exit(err)

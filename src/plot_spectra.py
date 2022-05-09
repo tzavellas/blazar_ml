@@ -61,8 +61,7 @@ def plot_spectrum(x, y, id, labels=(r'$x$', r'$x^2 \cdot n(x)$'), marker=3, lwid
             marker(int):            Marker size. Default 3.
             file (str):             File path to save the plot. Default None -> does not save the figure.
     '''
-#     plt.plot(x, y, '.', markersize=marker, label='{}'.format(id))
-    plt.plot(x, y, ls='-', lw=lwith, label='{}'.format(id))
+    plt.plot(x, y, ls='-', lw=lwidth, label='{}'.format(id))
     plt.xlabel(labels[0])
     plt.ylabel(labels[1])
     plt.ylimt(-16,0)
@@ -82,7 +81,6 @@ def write_spectrum(df, id, marker=3, lwidth=1):
     '''
     x = df['x']
     y = df['x^2*n(x)']
-#     plt.plot(x, y, '.', markersize=marker, label='{}'.format(id))
     plt.plot(x, y, ls='-', lw=lwidth, label='{}'.format(id))
     plt.ylimt(-16,0)
     return
@@ -106,6 +104,37 @@ def save(id, working_dir, img_format):
     return
 
 
+def aggregate_plots(output, working_dir, img_format, legend):
+    '''
+    Crawls working directory, reads each steady state and appends it in a single plot file.
+        Parameters:
+            output (str):           The plot file.
+            working_dir (str):      The working directory.
+            img_format (str):       Image format of the spectrum plot.
+            legend (bool):          If true, shows a legend in the plot file.
+    '''
+    dir = os.fsencode(working_dir)
+
+    for file in os.listdir(dir):
+        run_id = os.fsdecode(file)
+        scenario = '{}/{}/steady_state.csv'.format(working_dir, run_id)
+
+        try:
+            df = pd.read_csv(scenario)
+        except BaseException as e:
+            print('read_csv: {}'.format(e), file=sys.stderr)
+            return -1
+
+        write_spectrum(df, run_id)
+
+    if legend:
+        plt.legend()
+
+    output = '{}.{}'.format(output, img_format)
+    plt.savefig(output, format=img_format)
+    return 0
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Plots spectra in a single file.')
@@ -124,24 +153,6 @@ if __name__ == "__main__":
         print('parse_args: {}'.format(arg_e))
         sys.exit(1)
     
-    dir = os.fsencode(args.working_dir)
-    
-    for file in os.listdir(dir):
-        run_id = os.fsdecode(file)
-        scenario = '{}/{}/steady_state.csv'.format(args.working_dir, run_id)
-        
-        try:
-            df = pd.read_csv(scenario)
-        except BaseException as e:
-            print('read_csv: {}'.format(e), file=sys.stderr)
-            sys.exit(1)
-        
-        write_spectrum(df, run_id)
+    ret = aggregate_plots(args.output, args.working_dir, args.format, args.legend)
 
-    if args.legend:
-        plt.legend()
-    
-    output = '{}.{}'.format(args.output, args.format)
-    plt.savefig(output, format=args.format)
-
-    sys.exit(0)
+    sys.exit(ret)
