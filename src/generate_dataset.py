@@ -26,8 +26,8 @@ ignored_keys = set([elapsed_key, run_key, success_key])
 # Dictionary with all possible program inputs. Keys with value None must be defined.
 inputs_template = [
     {'ireadin': 0, 'npdec': 10, 'nsteps': 5, 'nout': 10, 'tmax': 5.},
-    {'gpexmx': 10., 'ypmin': -6., 'yemin': -40., 'ygmin': -58., 'tol': 1e-4},
-    {'slpinj': 2., 'slninj': 2., 'sleinj': 2.5, 'slginj': 2., 'slntinj': 2.},
+    {'gpexmx': 8., 'ypmin': -6., 'yemin': -40., 'ygmin': -60., 'tol': 1e-4},
+    {'slpinj': 2., 'slninj': 2., 'sleinj': 3.0, 'slginj': 2., 'slntinj': 2.},
     {'radius': None, 'bfield': None},
     {'iprext': 0, 'gpextmn': 5.21, 'gpextmx': 5.41, 'slprints': 2.01, 'exlumpr': -1.6, 'bpresc': 1., 'ap': 0., 'ipexp': 0},
     {'ielext': 1, 'geextmn': None, 'geextmx': None, 'slelints': None, 'exlumel': None, 'belesc': 1., 'ae': 0., 'ieexp': 0},
@@ -35,11 +35,10 @@ inputs_template = [
     {'iphotext2': 0, 'x1': 1e-4, 'x2': 1.5e-4, 'xbr': 1.5e-4, 'beta1': 2., 'beta2': 2., 'extph0': 1e-1},
     {'ielextbr': 0, 'geextbr': 4.01, 'slelints1': 1.6, 'slelints2': 4.5, 'ae2': 1.},
     {'iprextbr': 0, 'gpextbr': 5.01, 'slprints1': 1.6, 'slprints2': 2.6, 'ap2': 1.},
-    {'isyn': 1, 'iprsyn': 0, 'imsyn': 0, 'ipsyn': 0, 'iksyn': 0, 'issa': 1},
+    {'isyn': 1, 'iprsyn': 0, 'imsyn': 0, 'ipsyn': 0, 'iksyn': 0, 'issa': 0},
     {'icompt': 1, 'ikn': 0, 'igg': 0, 'ianni': 0, 'iesc': 1, 'ipsc': 1},
     {'ipair': 0, 'ipion': 0, 'ineutron': 0},
 ]
-
 
 def create_output_directory(run_id, working_dir=os.getcwd()):
     '''
