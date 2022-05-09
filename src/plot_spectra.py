@@ -1,11 +1,13 @@
 #!/usr/bin/python
 
 import argparse
+import logging
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
 import sys
 
+logging.getLogger('matplotlib.font_manager').disabled = True
 
 plot_fname              = 'plot'
 program_output_fname    = 'fort.81'
@@ -115,27 +117,35 @@ def aggregate_plots(output, working_dir, img_format, legend):
     '''
     dir = os.fsencode(working_dir)
 
+    output = '{}.{}'.format(output, img_format)
+    if os.path.exists(output):
+        logging.debug('{} exists. Removing...'.format(output))
+        os.remove(output)
+
     for file in os.listdir(dir):
         run_id = os.fsdecode(file)
         scenario = '{}/{}/steady_state.csv'.format(working_dir, run_id)
+        logging.debug('Reading scenario {}'.format(scenario))
 
         try:
             df = pd.read_csv(scenario)
         except BaseException as e:
-            print('read_csv: {}'.format(e), file=sys.stderr)
+            logging.error('read_csv: {}'.format(e))
             return -1
 
+        logging.debug('Writing spectrum {}'.format(run_id))
         write_spectrum(df, run_id)
 
     if legend:
         plt.legend()
 
-    output = '{}.{}'.format(output, img_format)
+    logging.debug('Saving figure {}'.format(output))
     plt.savefig(output, format=img_format)
     return 0
 
 
 if __name__ == "__main__":
+
     parser = argparse.ArgumentParser(
         description='Plots spectra in a single file.')
     parser.add_argument('-o', '--output', default='spectra', type=str, 
@@ -150,7 +160,7 @@ if __name__ == "__main__":
     try:
         args = parser.parse_args()
     except argparse.ArgumentError as arg_e:
-        print('parse_args: {}'.format(arg_e))
+        logging.error('parse_args: {}'.format(arg_e))
         sys.exit(1)
     
     ret = aggregate_plots(args.output, args.working_dir, args.format, args.legend)

@@ -2,14 +2,16 @@
 
 from datetime import datetime
 from multiprocessing import Pool
-import subprocess
 import argparse
+import logging
 import os
 import pandas as pd
 import re
 import shutil
+import subprocess
 import sys
 import plot_spectra
+
 
 elapsed_key = 'elapsed_time'
 success_key = 'success'
@@ -50,11 +52,13 @@ def create_output_directory(run_id, working_dir=os.getcwd()):
     output_dir = os.path.realpath(working_dir + '/{}'.format(int(run_id)))
 
     if os.path.exists(output_dir):  # remove output_dir if it exists
+        logging.debug('Dir {} exists. Removing...'.format(output_dir))
         shutil.rmtree(output_dir)
     try:
+        logging.debug('Creating dir {}'.format(output_dir))
         os.makedirs(output_dir)
     except OSError as e:
-        print("Error: {} : {}".format(output_dir, e.strerror))
+        logging.error('Error: {} : {}'.format(output_dir, e.strerror))
 
     return output_dir
 
@@ -68,6 +72,7 @@ def create_program_link(executable_path, dest_dir):
     '''
     base_name = os.path.basename(executable_path)
     link = '{}/{}'.format(dest_dir, base_name)
+    logging.debug('Creating symlink {}'.format(link))
     os.symlink(executable_path, link)
     return link
 
@@ -79,6 +84,8 @@ def create_input_dictionary(input_series):
             input_series (pandas.Series):   A subset of all possible input parameters.
     '''
     input_dict = inputs_template  # copy template
+
+    logging.debug('Creating input dictionary...')
 
     for index, value in input_series.iteritems():
         if index not in ignored_keys:
@@ -101,6 +108,8 @@ def create_program_input(input_series, working_dir, input_fname='code.inp'):
     input_file = os.path.realpath(working_dir + '/{}'.format(input_fname))
 
     # open file
+    logging.debug('Open to write {}'.format(input_file))
+
     with open(input_file, 'w') as f:
         input_dict = create_input_dictionary(input_series)
         values = ''
@@ -118,10 +127,12 @@ def create_program_input(input_series, working_dir, input_fname='code.inp'):
         print(values, file=f) # print values at the begining of the file
         print(keys, file=f)   # print keys at the end of the file
 
+    logging.debug('{} written'.format(input_file))
+
     return input_file
 
 
-def launch_process(executable, input_file, extra_args, output_dir):
+def launch_process(executable, input_file, extra_args, output_dir, id):
     '''
     Launches a program instance. Program stdout is stored in a file "stdout.txt".
         Parameters:
@@ -129,20 +140,27 @@ def launch_process(executable, input_file, extra_args, output_dir):
             input_file (str):       Program input file.
             extra_args (str):       Program extra arguments.
             output_dir (str):       Program output directory.
+            id (int):               Run id of the current execution.
     '''
     cmd_args = [executable, input_file]     # Create shell command
     for arg in extra_args:
         cmd_args.append(arg)                # Appends extra_args to command, if any
+    logging.debug('Run {} command: {}'.format(id, cmd_args))
 
     try:
         os.chdir(output_dir)                # Change to output directory
+
+        logging.debug('Run {} subprocess launch'.format(id))
 
         with open('stdout.txt', 'w') as f:
             stream = subprocess.run(cmd_args, capture_output=True).stdout
             stream = stream.decode("utf-8")
             print(stream, file=f)           # Store stdout in a file for future reference
+
+        logging.debug('Run {} subprocess finished'.format(id))
+
     except OSError as e:
-        print("Error: {} : {}".format(output_dir, e.strerror))
+        logging.error('Run {} error: {} : {}'.format(id, output_dir, e.strerror))
 
     return stream
 
@@ -155,22 +173,26 @@ def parse_stream(stream, id):
             id (int):                       Run id of the current execution.
     '''
     overflow = stream.find('overflow!!!')           # search stream for overflow
+    logging.debug('Run {} search overflow: {}'.format(id, overflow))
 
     integration_pattern = 'IFAIL=\s*2'              # search stream for IFAIL
     integration_fail = re.search(integration_pattern, stream)
+    logging.debug('Run {} search integration failure: {}'.format(id, integration_fail))
 
     if (overflow == -1) and (integration_fail is None):
         success = True
     else:
-        print('Run {} failed'.format(id), file=sys.stderr)
+        logging.error('Run {} failed'.format(id))
         success = False
     
     pattern = 'Elapsed CPU time\D+(\d+\.\d+)'       # regex pattern
     match = re.search(pattern, stream)              # Find pattern
+
     if match:
         elapsed_time = float(match.group(1))
+        logging.debug('Run {} search elapsed CPU time: {}'.format(id, elapsed_time))
     else:
-        print('Elapsed time pattern not found', file=sys.stderr)
+        logging.error('Run {} Elapsed time pattern not found'.format(id))
         elapsed_time = .0
 
     return success, elapsed_time
@@ -193,17 +215,30 @@ def run_scenario(executable_path, input_series, id, working_dir, img_format, ext
     
     program_input = create_program_input(input_series, out_dir)
 
-    out_stream = launch_process(link, program_input, extra_args, out_dir)
+    out_stream = launch_process(link, program_input, extra_args, out_dir, id)
 
     success, elapsed_time = parse_stream(out_stream, id)
 
+    logging.info('Run {} parse success: {}'.format(id, success))
     if success:
+        logging.info('Run {} saving spectrum in: {}'.format(id, out_dir))
         plot_spectra.save(id, out_dir, img_format)
 
     return id, success, elapsed_time
 
 
 if __name__ == "__main__":
+
+    logfile = '{}/generate_dataset.log'.format(os.getcwd())
+    if os.path.exists(logfile):
+        os.remove(logfile)
+        
+    logging.basicConfig(
+        filename=logfile,
+        level=logging.DEBUG,
+        format='%(asctime)s - %(levelname)s: %(message)s'
+    )
+
     parser = argparse.ArgumentParser(
         description='Generates the dataset given a sample of the input space.')
     parser.add_argument('-e', '--executable', type=str, required=True,
@@ -224,32 +259,37 @@ if __name__ == "__main__":
                         help='List of extra arguments to pass to the program. Default is [].')
 
     try:
+        logging.debug('parse_args')
         args = parser.parse_args()
     except argparse.ArgumentError as arg_e:
-        print('parse_args: {}'.format(arg_e), file=sys.stderr)
+        logging.error('parse_args: {}'.format(arg_e))
         sys.exit(1)
 
+    logging.debug('exec_path exists')
     exec_path = args.executable
     if not os.path.exists(exec_path):
-        print('Executable {} does not exist'.format(exec_path), file=sys.stderr)
+        logging.error('Executable {} does not exist'.format(exec_path))
         sys.exit(1)
 
+    logging.debug('check input file')
     input = args.input
     if not os.path.isabs(input):
         input = os.path.realpath('{}/{}'.format(os.getcwd(), input))
 
     if not os.path.exists(input):
-        print('File {} does not exist'.format(input), file=sys.stderr)
+        logging.error('File {} does not exist'.format(input))
         sys.exit(1)
 
     try:
+        logging.debug('read_csv '.format(input))
         inputs = pd.read_csv(input)
         inputs.insert(1, success_key, "False")       # add two extra columns
         inputs.insert(2, elapsed_key, 0.0)
     except BaseException as e:
-        print('read_csv: {}'.format(e), file=sys.stderr)
+        logging.error('read_csv: {}'.format(e))
         sys.exit(1)
 
+    logging.info('build scenario parameters')
     params = []
     for row in range(inputs.shape[0]):
         params.append((
@@ -267,7 +307,7 @@ if __name__ == "__main__":
     
     end_time = datetime.now()
     
-    print('Duration: {}'.format(end_time - start_time))  # prints total runtime duration
+    logging.info('Duration: {}'.format(end_time - start_time)) # logs total runtime duration
 
     for row, success, elapsed_time in result:
         inputs.at[row, success_key] = success
@@ -279,13 +319,14 @@ if __name__ == "__main__":
         basename = os.path.basename(input).split('.')[0]
         dirname = os.path.dirname(input)
         out_csv = '{}/{}_extended.csv'.format(dirname, basename)
-        
+    
+    logging.info('write result to csv {}'.format(out_csv))
     inputs.to_csv(out_csv, index=None)
 
     if args.plot_spectra:
         spectra = '{}/spectra'.format(args.working_dir)
         err = plot_spectra.aggregate_plots(spectra, args.working_dir, args.format, True)
         if  err != 0:
-            print('Error plotting aggregate spectrum {}'.format(spectra), file=sys.stderr)
+            logging.error('Error plotting aggregate spectrum {}'.format(spectra))
 
     sys.exit(err)
