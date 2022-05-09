@@ -14,7 +14,7 @@ conda create -y --name hea_ml
 conda activate hea_ml
 
 # Install dependencies
-conda install -y astropy numpy pandas matplotlib
+conda install -y autopep8 astropy matplotlib numpy pandas
 ```
 
 ### Linux
@@ -37,6 +37,7 @@ pip install autopep8 astropy matplotlib numpy pandas
 ```bash
 python src/prepare_inputs.py
 python src/generate_dataset.py --executable /path/to/program --input out.csv
+python src/plot_spectra.py --working-dir /path/to/dir --output spectra.png
 ```
 
 ## Removal

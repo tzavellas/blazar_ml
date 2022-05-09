@@ -105,15 +105,15 @@ def save(id, working_dir, img_format):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='Plots spectra in a single file')
-    parser.add_argument('-o', '--output', default='spectra',
-                        type=str, help='Aggregate plot of all spectra')
-    parser.add_argument('-w', '--working-dir', default='output',
-                        type=str, help='Root path where the individual spectra are stored')
+        description='Plots spectra in a single file.')
+    parser.add_argument('-o', '--output', default='spectra', type=str, 
+                        help='Aggregate plot of all spectra. Default is "spectra.png".')
+    parser.add_argument('-w', '--working-dir', default='output', type=str,
+                        help='Root path where the individual spectra are stored. Default is "output".')
     parser.add_argument('-f', '--format', type=str, default='png',
-                        help='Spectrum image format. Default is png')
+                        help='Spectrum image format. Default is png.')
     parser.add_argument('--legend', action='store_true', default=False,
-                        help='Adds legend to the spectra plot')
+                        help='Adds legend to the spectra plot. Default is false.')
 
     try:
         args = parser.parse_args()

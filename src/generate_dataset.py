@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from datetime import datetime
 from multiprocessing import Pool
 import subprocess
 import argparse
@@ -202,21 +203,21 @@ def run_scenario(executable_path, input_series, id, working_dir, img_format, ext
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='Generates the dataset given a sample of the input space')
+        description='Generates the dataset given a sample of the input space.')
     parser.add_argument('-e', '--executable', type=str, required=True,
-                        help='Full path to the program executable')
+                        help='Full path to the program executable.')
     parser.add_argument('-i', '--input', type=str, required=True,
-                        help='CSV file with the a sample of the input space')
+                        help='CSV file with the a sample of the input space.')
     parser.add_argument('-w', '--working-dir', type=str, default='output',
-                        help='Root path where the dataset will be stored')
+                        help='Root path where the dataset will be stored. Default is "output".')
     parser.add_argument('-f', '--format', type=str, default='png',
-                        help='Spectrum image format. Default is png')
+                        help='Spectrum image format. Default is png.')
     parser.add_argument('-n', '--num-proc', type=int, default=None,
-                        help='Number of process to launch. Default is number of system threads')
+                        help='Number of processes to launch. Default is number of system threads')
     parser.add_argument('--overwrite-input', action='store_true', default=False,
-                        help='Overwrites input CSV')
+                        help='Overwrites input CSV. Default is false')
     parser.add_argument('-x', '--extra-args', default=[], nargs='*',
-                        help='List of extra arguments to pass to the program')
+                        help='List of extra arguments to pass to the program. Default is [].')
 
     try:
         args = parser.parse_args()
@@ -247,9 +248,15 @@ if __name__ == "__main__":
             args.format, 
             args.extra_args))
 
+    start_time = datetime.now()
+
     with Pool(processes=args.num_proc) as pool:
         result = pool.starmap(run_scenario, params)
     
+    end_time = datetime.now()
+    
+    print('Duration: {}'.format(end_time - start_time))  # prints total runtime duration
+
     for row, success, elapsed_time in result:
         inputs.at[row, success_key] = success
         inputs.at[row, elapsed_key] = elapsed_time
