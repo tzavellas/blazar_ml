@@ -84,6 +84,7 @@ def write_spectrum(df, id, marker=3, lwidth=1):
     y = df['x^2*n(x)']
 #     plt.plot(x, y, '.', markersize=marker, label='{}'.format(id))
     plt.plot(x, y, ls='-', lw=lwidth, label='{}'.format(id))
+    plt.ylimt(-16,0)
     return
 
 
