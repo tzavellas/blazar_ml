@@ -63,7 +63,7 @@ def generate_sample_inputs(N, out):
               BFIELD    : sample(-2, 2),
               GAMMA     : sample(0.1, 4),
               LE        : sample(-5, -1),
-              P         : sample(1.5, 4)
+              P         : sample(1.5, 3)
               }
 
     # Pre-allocate arrays of samples
