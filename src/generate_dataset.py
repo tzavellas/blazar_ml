@@ -156,8 +156,11 @@ def parse_stream(stream, id):
             id (int):                       Run id of the current execution.
     '''
     overflow = stream.find('overflow!!!')           # search stream for overflow
-    integration_fail = stream.find('IFAIL=2')       # search stream for IFAIL
-    if (overflow == -1) and (integration_fail == -1):
+
+    integration_pattern = 'IFAIL=\s*2'              # search stream for IFAIL
+    integration_fail = re.search(integration_pattern, stream)
+
+    if (overflow == -1) and (integration_fail is None):
         success = True
     else:
         print('Run {} failed'.format(id), file=sys.stderr)
