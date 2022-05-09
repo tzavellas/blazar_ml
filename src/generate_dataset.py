@@ -230,8 +230,16 @@ if __name__ == "__main__":
         print('Executable {} does not exist'.format(exec_path), file=sys.stderr)
         sys.exit(1)
 
+    input = args.input
+    if not os.path.isabs(input):
+        input = os.path.realpath('{}/{}'.format(os.getcwd(), input))
+
+    if not os.path.exists(input):
+        print('File {} does not exist'.format(input), file=sys.stderr)
+        sys.exit(1)
+
     try:
-        inputs = pd.read_csv(args.input)
+        inputs = pd.read_csv(input)
         inputs.insert(1, success_key, "False")       # add two extra columns
         inputs.insert(2, elapsed_key, 0.0)
     except BaseException as e:
@@ -260,12 +268,12 @@ if __name__ == "__main__":
     for row, success, elapsed_time in result:
         inputs.at[row, success_key] = success
         inputs.at[row, elapsed_key] = elapsed_time
-
+    
     if args.overwrite_input:
-        out_csv = args.input
+        out_csv = input
     else:
-        basename = os.path.basename(args.input).split('.')[0]
-        dirname = os.path.dirname(args.input)
+        basename = os.path.basename(input).split('.')[0]
+        dirname = os.path.dirname(input)
         out_csv = '{}/{}_extended.csv'.format(dirname, basename)
         
     inputs.to_csv(out_csv, index=None)
