@@ -174,11 +174,11 @@ def parse_stream(stream, id, logger):
             id (int):                       Run id of the current execution.
     '''
     overflow = stream.find('overflow!!!')           # search stream for overflow
-    logger.debug('Run {} search overflow: {}'.format(id, overflow))
+    logger.debug('Run {} found overflow: {}'.format(id, overflow == -1))
 
     integration_pattern = '.*IFAIL\s=\s*2'           # search stream for IFAIL
     integration_fail = re.search(integration_pattern, stream)
-    logger.debug('Run {} search integration failure: {}'.format(id, integration_fail))
+    logger.debug('Run {} found integration failure: {}'.format(id, integration_fail is not None))
 
     if (overflow == -1) and (integration_fail is None):
         success = True
