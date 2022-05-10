@@ -113,6 +113,7 @@ def aggregate_plots(output, working_dir, img_format, legend, logger):
             img_format (str):       Image format of the spectrum plot.
             legend (bool):          If true, shows a legend in the plot file.
     '''
+    err = False
     dir = os.fsencode(working_dir)
 
     output = os.path.abspath('{}/{}.{}'.format(working_dir, output, img_format))
@@ -123,13 +124,19 @@ def aggregate_plots(output, working_dir, img_format, legend, logger):
     for file in os.listdir(dir):
         run_id = os.fsdecode(file)
         scenario = os.path.abspath('{}/{}/steady_state.csv'.format(working_dir, run_id))
+
+        if not os.path.exists(scenario):
+            logger.warning('Scenario {} does not exist'.format(scenario))
+            logger.warning('Skipping Run {} from plot'.format(run_id))
+            continue
+
         logger.debug('Reading {} ...'.format(scenario))
 
         try:
             df = pd.read_csv(scenario)
         except BaseException as e:
             logger.error('read_csv: {}'.format(e))
-            return -1
+            err = True
 
         logger.debug('Appending spectrum from Run {} ...'.format(run_id))
         append_spectrum(df, run_id)
@@ -139,7 +146,7 @@ def aggregate_plots(output, working_dir, img_format, legend, logger):
 
     logger.debug('Saving figure {} ...'.format(output))
     plt.savefig(output, format=img_format)
-    return 0
+    return err
 
 
 def init_logger(logfile, log_level=logging.DEBUG):
@@ -203,5 +210,5 @@ if __name__ == "__main__":
     logger = init_logger(logfile)
 
     ret = aggregate_plots(args.output, args.working_dir, args.format, args.legend, logger)
-
+    
     sys.exit(ret)

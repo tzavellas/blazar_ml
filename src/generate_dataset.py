@@ -374,7 +374,8 @@ if __name__ == "__main__":
         spectra = 'spectra'
         add_legend = True
         err = plot_spectra.aggregate_plots(spectra, working_dir, args.format, add_legend, logger)
-        if  err != 0:
+        if err:
             logger.error('Error plotting aggregate spectrum {}'.format(spectra))
+            sys.exit(1)
 
-    sys.exit(err)
+    sys.exit(0)
