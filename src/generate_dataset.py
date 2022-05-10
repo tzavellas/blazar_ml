@@ -49,6 +49,7 @@ def create_output_directory(run_id, working_dir, logger):
         Parameters:
             run_id (str):                   The id of the output directory.
             working_dir (str):              The working directory.
+            logger (Logger):                Logger handle.
     '''
     output_dir = os.path.realpath(working_dir + '/{}'.format(int(run_id)))
 
@@ -70,6 +71,7 @@ def create_program_link(executable_path, dest_dir, logger):
         Parameters:
             executable_path (str):          Full path to the program executable.
             dest_dir (str):                 The destination directory.
+            logger (Logger):                Logger handle.
     '''
     base_name = os.path.basename(executable_path)
     link = '{}/{}'.format(dest_dir, base_name)
@@ -83,6 +85,7 @@ def create_input_dictionary(input_series, logger):
     Creates a dictionary with the all the input parameters of the program
         Parameters:
             input_series (pandas.Series):   A subset of all possible input parameters.
+            logger (Logger):                Logger handle.
     '''
     input_dict = inputs_template  # copy template
 
@@ -104,6 +107,7 @@ def create_program_input(input_series, working_dir, input_fname, logger):
             input_series (pandas.Series):   A subset of all possible input parameters.
             working_dir (str):              The working directory.
             input_fname (str):              The name of the input file of the program.
+            logger (Logger):                Logger handle.
     '''
     # input file path name
     input_file = os.path.realpath(working_dir + '/{}'.format(input_fname))
@@ -142,6 +146,7 @@ def launch_process(executable, input_file, extra_args, output_dir, id, logger):
             extra_args (str):       Program extra arguments.
             output_dir (str):       Program output directory.
             id (int):               Run id of the current execution.
+            logger (Logger):        Logger handle.
     '''
     cmd_args = [executable, input_file]     # Create shell command
     for arg in extra_args:
@@ -172,6 +177,7 @@ def parse_stream(stream, id, logger):
         Parameters:
             stream (str):                   Program stdout stream.
             id (int):                       Run id of the current execution.
+            logger (Logger):                Logger handle.
     '''
     overflow = stream.find('overflow!!!')           # search stream for overflow
     logger.debug('Run {} found overflow: {}'.format(id, overflow == -1))
@@ -186,15 +192,17 @@ def parse_stream(stream, id, logger):
         logger.error('Run {} failed'.format(id))
         success = False
     
-    pattern = 'Elapsed CPU time\D+(\d+\.\d+)'       # regex pattern
-    match = re.search(pattern, stream)              # Find pattern
-
-    if match:
-        elapsed_time = float(match.group(1))
-        logger.debug('Run {} search elapsed CPU time: {}'.format(id, elapsed_time))
+    elapsed_time = .0
+    if success:
+        pattern = 'Elapsed CPU time\D+(\d+\.\d+)'       # regex pattern
+        match = re.search(pattern, stream)              # Find pattern
+        if match:
+            elapsed_time = float(match.group(1))
+            logger.debug('Run {} search elapsed CPU time: {}'.format(id, elapsed_time))
+        else:
+            logger.error('Run {} Elapsed time pattern not found'.format(id))
     else:
-        logger.error('Run {} Elapsed time pattern not found'.format(id))
-        elapsed_time = .0
+        logger.warning('Run {} was not successful. elapsed CPU time will be set to 0.'.format(id))
 
     return success, elapsed_time
 
@@ -209,6 +217,7 @@ def run_scenario(executable_path, input_series, id, working_dir, img_format, ext
             working_dir (str):              The working directory.
             img_format (str):               Image format of the spectra plots.
             extra_args (list):              List of extra program arguments.
+            logger (Logger):                Logger handle.
     '''
     out_dir = create_output_directory(id, working_dir, logger)
     
@@ -228,22 +237,35 @@ def run_scenario(executable_path, input_series, id, working_dir, img_format, ext
     return id, success, elapsed_time
 
 
-def init_logger(logfile):
+def init_logger(logfile, log_level=logging.DEBUG):
+    '''
+    Initializes the logger.
+        Parameters:
+            logfile (str):                  Path to the output logfile.
+            log_level (enum):               Logger log level. Default is DEBUG.
+    '''
+    # disables matplotlib logging to avoid spam
     logging.getLogger('matplotlib').disabled = True
     logging.getLogger('matplotlib.font_manager').disabled = True
+
     logger = logging.getLogger()
 
+    # Set log format time - log level : msg
     formatter= logging.Formatter('%(asctime)s - %(levelname)s: %(message)s')
     
+    # Attach a file logger
     file_handler = logging.FileHandler(filename=logfile, mode='a')
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
+    # Attach a console logger
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
 
-    logger.setLevel(logging.DEBUG)
+    # Set log level
+    logger.setLevel(log_level)
+
     return logger
 
 
@@ -318,7 +340,7 @@ if __name__ == "__main__":
             exec_path, 
             inputs.iloc[row], 
             row,
-            args.working_dir, 
+            working_dir,
             args.format, 
             args.extra_args,
             logger))
@@ -349,8 +371,9 @@ if __name__ == "__main__":
     inputs.to_csv(out_csv, index=None)
 
     if args.plot_spectra:
-        spectra = '{}/spectra'.format(args.working_dir)
-        err = plot_spectra.aggregate_plots(spectra, args.working_dir, args.format, True, logger)
+        spectra = 'spectra'
+        add_legend = True
+        err = plot_spectra.aggregate_plots(spectra, working_dir, args.format, add_legend, logger)
         if  err != 0:
             logger.error('Error plotting aggregate spectrum {}'.format(spectra))
 

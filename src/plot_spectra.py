@@ -71,7 +71,7 @@ def plot_spectrum(x, y, id, labels=(r'$x$', r'$x^2 \cdot n(x)$'), marker=3, lwid
     return
 
 
-def write_spectrum(df, id, marker=3, lwidth=1):
+def append_spectrum(df, id, marker=3, lwidth=1):
     '''
     Wrapper function. Given a fort.81 file, extracts the steady state spectrum, saves it in a CSV file and plots it.
         Parameters:
@@ -115,15 +115,15 @@ def aggregate_plots(output, working_dir, img_format, legend, logger):
     '''
     dir = os.fsencode(working_dir)
 
-    output = '{}.{}'.format(output, img_format)
+    output = os.path.abspath('{}/{}.{}'.format(working_dir, output, img_format))
     if os.path.exists(output):
         logger.debug('{} exists. Removing...'.format(output))
         os.remove(output)
 
     for file in os.listdir(dir):
         run_id = os.fsdecode(file)
-        scenario = '{}/{}/steady_state.csv'.format(working_dir, run_id)
-        logger.debug('Reading scenario {}'.format(scenario))
+        scenario = os.path.abspath('{}/{}/steady_state.csv'.format(working_dir, run_id))
+        logger.debug('Reading {} ...'.format(scenario))
 
         try:
             df = pd.read_csv(scenario)
@@ -131,33 +131,46 @@ def aggregate_plots(output, working_dir, img_format, legend, logger):
             logger.error('read_csv: {}'.format(e))
             return -1
 
-        logger.debug('Writing spectrum {}'.format(run_id))
-        write_spectrum(df, run_id)
+        logger.debug('Appending spectrum from Run {} ...'.format(run_id))
+        append_spectrum(df, run_id)
 
     if legend:
         plt.legend()
 
-    logger.debug('Saving figure {}'.format(output))
+    logger.debug('Saving figure {} ...'.format(output))
     plt.savefig(output, format=img_format)
     return 0
 
 
-def init_logger(logfile):
+def init_logger(logfile, log_level=logging.DEBUG):
+    '''
+    Initializes the logger.
+        Parameters:
+            logfile (str):                  Path to the output logfile.
+            log_level (enum):               Logger log level. Default is DEBUG.
+    '''
+    # disables matplotlib logging to avoid spam
     logging.getLogger('matplotlib').disabled = True
     logging.getLogger('matplotlib.font_manager').disabled = True
+
     logger = logging.getLogger()
 
+    # Set log format time - log level : msg
     formatter= logging.Formatter('%(asctime)s - %(levelname)s: %(message)s')
     
+    # Attach a file logger
     file_handler = logging.FileHandler(filename=logfile, mode='a')
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
+    # Attach a console logger
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
 
-    logger.setLevel(logging.DEBUG)
+    # Set log level
+    logger.setLevel(log_level)
+
     return logger
 
 
