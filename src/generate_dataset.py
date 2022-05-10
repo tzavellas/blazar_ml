@@ -12,7 +12,8 @@ import subprocess
 import sys
 import plot_spectra
 
-
+# Script constants
+code_inp = 'code.inp'
 elapsed_key = 'elapsed_time'
 success_key = 'success'
 run_key = 'run'
@@ -42,28 +43,28 @@ inputs_template = [
     {'ipair': 0, 'ipion': 0, 'ineutron': 0},
 ]
 
-def create_output_directory(run_id, working_dir=os.getcwd()):
+def create_output_directory(run_id, working_dir, logger):
     '''
     Creates the output directory
         Parameters:
-            run_id (str):                   The id of the output directory
-            working_dir (str):              The working directory. Default is the current working directory
+            run_id (str):                   The id of the output directory.
+            working_dir (str):              The working directory.
     '''
     output_dir = os.path.realpath(working_dir + '/{}'.format(int(run_id)))
 
     if os.path.exists(output_dir):  # remove output_dir if it exists
-        logging.debug('Dir {} exists. Removing...'.format(output_dir))
+        logger.debug('Dir {} exists. Removing...'.format(output_dir))
         shutil.rmtree(output_dir)
     try:
-        logging.debug('Creating dir {}'.format(output_dir))
+        logger.debug('Creating dir {}'.format(output_dir))
         os.makedirs(output_dir)
     except OSError as e:
-        logging.error('Error: {} : {}'.format(output_dir, e.strerror))
+        logger.error('Error: {} : {}'.format(output_dir, e.strerror))
 
     return output_dir
 
 
-def create_program_link(executable_path, dest_dir):
+def create_program_link(executable_path, dest_dir, logger):
     '''
     Create symbolic link in the destination directory.
         Parameters:
@@ -72,12 +73,12 @@ def create_program_link(executable_path, dest_dir):
     '''
     base_name = os.path.basename(executable_path)
     link = '{}/{}'.format(dest_dir, base_name)
-    logging.debug('Creating symlink {}'.format(link))
+    logger.debug('Creating symlink {}'.format(link))
     os.symlink(executable_path, link)
     return link
 
 
-def create_input_dictionary(input_series):
+def create_input_dictionary(input_series, logger):
     '''
     Creates a dictionary with the all the input parameters of the program
         Parameters:
@@ -85,7 +86,7 @@ def create_input_dictionary(input_series):
     '''
     input_dict = inputs_template  # copy template
 
-    logging.debug('Creating input dictionary...')
+    logger.debug('Creating input dictionary...')
 
     for index, value in input_series.iteritems():
         if index not in ignored_keys:
@@ -96,22 +97,22 @@ def create_input_dictionary(input_series):
     return input_dict
 
 
-def create_program_input(input_series, working_dir, input_fname='code.inp'):
+def create_program_input(input_series, working_dir, input_fname, logger):
     '''
     Compiles the absolute path of the input file of the program and writes it to disk.
         Parameters:
             input_series (pandas.Series):   A subset of all possible input parameters.
             working_dir (str):              The working directory.
-            input_fname (str):              The name of the input file of the program. Default is "code.inp".
+            input_fname (str):              The name of the input file of the program.
     '''
     # input file path name
     input_file = os.path.realpath(working_dir + '/{}'.format(input_fname))
 
     # open file
-    logging.debug('Open to write {}'.format(input_file))
+    logger.debug('Open to write {}'.format(input_file))
 
     with open(input_file, 'w') as f:
-        input_dict = create_input_dictionary(input_series)
+        input_dict = create_input_dictionary(input_series, logger)
         values = ''
         keys = ''
         for row in input_dict:
@@ -127,12 +128,12 @@ def create_program_input(input_series, working_dir, input_fname='code.inp'):
         print(values, file=f) # print values at the begining of the file
         print(keys, file=f)   # print keys at the end of the file
 
-    logging.debug('{} written'.format(input_file))
+    logger.debug('{} written'.format(input_file))
 
     return input_file
 
 
-def launch_process(executable, input_file, extra_args, output_dir, id):
+def launch_process(executable, input_file, extra_args, output_dir, id, logger):
     '''
     Launches a program instance. Program stdout is stored in a file "stdout.txt".
         Parameters:
@@ -145,27 +146,27 @@ def launch_process(executable, input_file, extra_args, output_dir, id):
     cmd_args = [executable, input_file]     # Create shell command
     for arg in extra_args:
         cmd_args.append(arg)                # Appends extra_args to command, if any
-    logging.debug('Run {} command: {}'.format(id, cmd_args))
+    logger.debug('Run {} command: {}'.format(id, cmd_args))
 
     try:
-        os.chdir(output_dir)                # Change to output directory
+        stream_file = '{}/stdout.txt'.format(output_dir)
+        logger.debug('Run {} subprocess stdout file {}'.format(id, stream_file))
 
-        logging.debug('Run {} subprocess launch'.format(id))
-
-        with open('stdout.txt', 'w') as f:
-            stream = subprocess.run(cmd_args, capture_output=True).stdout
+        with open(stream_file, 'w') as f:
+            logger.debug('Run {} subprocess launch'.format(id))
+            stream = subprocess.run(cmd_args, capture_output=True, cwd=output_dir).stdout
             stream = stream.decode("utf-8")
             print(stream, file=f)           # Store stdout in a file for future reference
 
-        logging.debug('Run {} subprocess finished'.format(id))
+        logger.debug('Run {} subprocess finished'.format(id))
 
     except OSError as e:
-        logging.error('Run {} error: {} : {}'.format(id, output_dir, e.strerror))
+        logger.error('Run {} error: {} : {}'.format(id, output_dir, e.strerror))
 
     return stream
 
 
-def parse_stream(stream, id):
+def parse_stream(stream, id, logger):
     '''
     Parses stdout. Detects unsuccessful execution and extracts execution time.
         Parameters:
@@ -173,16 +174,16 @@ def parse_stream(stream, id):
             id (int):                       Run id of the current execution.
     '''
     overflow = stream.find('overflow!!!')           # search stream for overflow
-    logging.debug('Run {} search overflow: {}'.format(id, overflow))
+    logger.debug('Run {} search overflow: {}'.format(id, overflow))
 
     integration_pattern = 'IFAIL=\s*2'              # search stream for IFAIL
     integration_fail = re.search(integration_pattern, stream)
-    logging.debug('Run {} search integration failure: {}'.format(id, integration_fail))
+    logger.debug('Run {} search integration failure: {}'.format(id, integration_fail))
 
     if (overflow == -1) and (integration_fail is None):
         success = True
     else:
-        logging.error('Run {} failed'.format(id))
+        logger.error('Run {} failed'.format(id))
         success = False
     
     pattern = 'Elapsed CPU time\D+(\d+\.\d+)'       # regex pattern
@@ -190,15 +191,15 @@ def parse_stream(stream, id):
 
     if match:
         elapsed_time = float(match.group(1))
-        logging.debug('Run {} search elapsed CPU time: {}'.format(id, elapsed_time))
+        logger.debug('Run {} search elapsed CPU time: {}'.format(id, elapsed_time))
     else:
-        logging.error('Run {} Elapsed time pattern not found'.format(id))
+        logger.error('Run {} Elapsed time pattern not found'.format(id))
         elapsed_time = .0
 
     return success, elapsed_time
 
 
-def run_scenario(executable_path, input_series, id, working_dir, img_format, extra_args):
+def run_scenario(executable_path, input_series, id, working_dir, img_format, extra_args, logger):
     '''
     Launches a new process.
         Parameters:
@@ -209,36 +210,44 @@ def run_scenario(executable_path, input_series, id, working_dir, img_format, ext
             img_format (str):               Image format of the spectra plots.
             extra_args (list):              List of extra program arguments.
     '''
-    out_dir = create_output_directory(id, working_dir)
+    out_dir = create_output_directory(id, working_dir, logger)
     
-    link = create_program_link(executable_path, out_dir)
+    link = create_program_link(executable_path, out_dir, logger)
     
-    program_input = create_program_input(input_series, out_dir)
+    program_input = create_program_input(input_series, out_dir, code_inp, logger)
 
-    out_stream = launch_process(link, program_input, extra_args, out_dir, id)
+    out_stream = launch_process(link, program_input, extra_args, out_dir, id, logger)
 
-    success, elapsed_time = parse_stream(out_stream, id)
+    success, elapsed_time = parse_stream(out_stream, id, logger)
 
-    logging.info('Run {} parse success: {}'.format(id, success))
+    logger.info('Run {} parse success: {}'.format(id, success))
     if success:
-        logging.info('Run {} saving spectrum in: {}'.format(id, out_dir))
+        logger.info('Run {} saving spectrum in: {}'.format(id, out_dir))
         plot_spectra.save(id, out_dir, img_format)
 
     return id, success, elapsed_time
 
 
+def init_logger(logfile):
+    logging.getLogger('matplotlib').disabled = True
+    logging.getLogger('matplotlib.font_manager').disabled = True
+    logger = logging.getLogger()
+
+    formatter= logging.Formatter('%(asctime)s - %(levelname)s: %(message)s')
+    
+    file_handler = logging.FileHandler(filename=logfile, mode='a')
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+
+    logger.setLevel(logging.DEBUG)
+    return logger
+
+
 if __name__ == "__main__":
-
-    logfile = '{}/generate_dataset.log'.format(os.getcwd())
-    if os.path.exists(logfile):
-        os.remove(logfile)
-        
-    logging.basicConfig(
-        filename=logfile,
-        level=logging.DEBUG,
-        format='%(asctime)s - %(levelname)s: %(message)s'
-    )
-
     parser = argparse.ArgumentParser(
         description='Generates the dataset given a sample of the input space.')
     parser.add_argument('-e', '--executable', type=str, required=True,
@@ -249,6 +258,8 @@ if __name__ == "__main__":
                         help='Root path where the dataset will be stored. Default is "output".')
     parser.add_argument('-f', '--format', type=str, default='png',
                         help='Spectrum image format. Default is png.')
+    parser.add_argument('-l', '--logging', type=str, default='generate_dataset.log',
+                        help='Log file. Default is generate_dataset.log.')
     parser.add_argument('-n', '--num-proc', type=int, default=None,
                         help='Number of processes to launch. Default is number of system threads')
     parser.add_argument('-r','--overwrite-input', action='store_true', default=False,
@@ -259,37 +270,48 @@ if __name__ == "__main__":
                         help='List of extra arguments to pass to the program. Default is [].')
 
     try:
-        logging.debug('parse_args')
         args = parser.parse_args()
     except argparse.ArgumentError as arg_e:
-        logging.error('parse_args: {}'.format(arg_e))
+        print('parse_args: {}'.format(arg_e), file=sys.stderr)
         sys.exit(1)
 
-    logging.debug('exec_path exists')
-    exec_path = args.executable
+    logfile = os.path.abspath(args.logging)
+    if os.path.exists(logfile):
+        os.remove(logfile)
+    print('Logfile: {}'.format(logfile))
+
+    logger = init_logger(logfile)
+        
+    logger.debug('check executable')
+    exec_path = os.path.abspath(args.executable)
     if not os.path.exists(exec_path):
-        logging.error('Executable {} does not exist'.format(exec_path))
+        logger.error('Executable {} does not exist'.format(exec_path))
         sys.exit(1)
 
-    logging.debug('check input file')
-    input = args.input
-    if not os.path.isabs(input):
-        input = os.path.realpath('{}/{}'.format(os.getcwd(), input))
-
+    logger.debug('check input file')
+    input = os.path.abspath(args.input)
     if not os.path.exists(input):
-        logging.error('File {} does not exist'.format(input))
+        logger.error('Input file {} does not exist'.format(input))
         sys.exit(1)
+
+    logger.debug('check working dir')
+    working_dir = os.path.abspath(args.working_dir)
+    if not os.path.exists(working_dir):
+        logger.error('working dir {} does not exist'.format(input))
+        os.makedirs(working_dir)
+    else:
+        shutil.rmtree(working_dir, ignore_errors=True)
 
     try:
-        logging.debug('read_csv '.format(input))
+        logger.debug('read_csv '.format(input))
         inputs = pd.read_csv(input)
         inputs.insert(1, success_key, "False")       # add two extra columns
         inputs.insert(2, elapsed_key, 0.0)
     except BaseException as e:
-        logging.error('read_csv: {}'.format(e))
+        logger.error('read_csv: {}'.format(e))
         sys.exit(1)
 
-    logging.info('build scenario parameters')
+    logger.info('build scenario parameters')
     params = []
     for row in range(inputs.shape[0]):
         params.append((
@@ -298,7 +320,8 @@ if __name__ == "__main__":
             row,
             args.working_dir, 
             args.format, 
-            args.extra_args))
+            args.extra_args,
+            logger))
 
     start_time = datetime.now()
 
@@ -307,7 +330,7 @@ if __name__ == "__main__":
     
     end_time = datetime.now()
     
-    logging.info('Duration: {}'.format(end_time - start_time)) # logs total runtime duration
+    logger.info('Duration: {}'.format(end_time - start_time)) # logs total runtime duration
 
     for row, success, elapsed_time in result:
         inputs.at[row, success_key] = success
@@ -316,17 +339,19 @@ if __name__ == "__main__":
     if args.overwrite_input:
         out_csv = input
     else:
-        basename = os.path.basename(input).split('.')[0]
-        dirname = os.path.dirname(input)
+        basename = os.path.basename(input).split('.')[0]    # basename without extension
+        dirname = os.path.dirname(input)                    # directory name
         out_csv = '{}/{}_extended.csv'.format(dirname, basename)
+        # if os.path.exists(out_csv):
+        #     os.remove(out_csv)
     
-    logging.info('write result to csv {}'.format(out_csv))
+    logger.info('write result to csv {}'.format(out_csv))
     inputs.to_csv(out_csv, index=None)
 
     if args.plot_spectra:
         spectra = '{}/spectra'.format(args.working_dir)
-        err = plot_spectra.aggregate_plots(spectra, args.working_dir, args.format, True)
+        err = plot_spectra.aggregate_plots(spectra, args.working_dir, args.format, True, logger)
         if  err != 0:
-            logging.error('Error plotting aggregate spectrum {}'.format(spectra))
+            logger.error('Error plotting aggregate spectrum {}'.format(spectra))
 
     sys.exit(err)

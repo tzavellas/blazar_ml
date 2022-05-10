@@ -7,8 +7,6 @@ import os
 import pandas as pd
 import sys
 
-logging.getLogger('matplotlib.font_manager').disabled = True
-
 plot_fname              = 'plot'
 program_output_fname    = 'fort.81'
 steady_state_fname      = 'steady_state.csv'
@@ -106,7 +104,7 @@ def save(id, working_dir, img_format):
     return
 
 
-def aggregate_plots(output, working_dir, img_format, legend):
+def aggregate_plots(output, working_dir, img_format, legend, logger):
     '''
     Crawls working directory, reads each steady state and appends it in a single plot file.
         Parameters:
@@ -119,29 +117,48 @@ def aggregate_plots(output, working_dir, img_format, legend):
 
     output = '{}.{}'.format(output, img_format)
     if os.path.exists(output):
-        logging.debug('{} exists. Removing...'.format(output))
+        logger.debug('{} exists. Removing...'.format(output))
         os.remove(output)
 
     for file in os.listdir(dir):
         run_id = os.fsdecode(file)
         scenario = '{}/{}/steady_state.csv'.format(working_dir, run_id)
-        logging.debug('Reading scenario {}'.format(scenario))
+        logger.debug('Reading scenario {}'.format(scenario))
 
         try:
             df = pd.read_csv(scenario)
         except BaseException as e:
-            logging.error('read_csv: {}'.format(e))
+            logger.error('read_csv: {}'.format(e))
             return -1
 
-        logging.debug('Writing spectrum {}'.format(run_id))
+        logger.debug('Writing spectrum {}'.format(run_id))
         write_spectrum(df, run_id)
 
     if legend:
         plt.legend()
 
-    logging.debug('Saving figure {}'.format(output))
+    logger.debug('Saving figure {}'.format(output))
     plt.savefig(output, format=img_format)
     return 0
+
+
+def init_logger(logfile):
+    logging.getLogger('matplotlib').disabled = True
+    logging.getLogger('matplotlib.font_manager').disabled = True
+    logger = logging.getLogger()
+
+    formatter= logging.Formatter('%(asctime)s - %(levelname)s: %(message)s')
+    
+    file_handler = logging.FileHandler(filename=logfile, mode='a')
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+
+    logger.setLevel(logging.DEBUG)
+    return logger
 
 
 if __name__ == "__main__":
@@ -156,13 +173,22 @@ if __name__ == "__main__":
                         help='Spectrum image format. Default is png.')
     parser.add_argument('--legend', action='store_true', default=False,
                         help='Adds legend to the spectra plot. Default is false.')
+    parser.add_argument('-l', '--logging', type=str, default='generate_dataset.log',
+                        help='Log file. Default is generate_dataset.log.')
 
     try:
         args = parser.parse_args()
     except argparse.ArgumentError as arg_e:
-        logging.error('parse_args: {}'.format(arg_e))
+        print('parse_args: {}'.format(arg_e), file=sys.stderr)
         sys.exit(1)
     
-    ret = aggregate_plots(args.output, args.working_dir, args.format, args.legend)
+    logfile = os.path.abspath(args.logging)
+    if os.path.exists(logfile):
+        os.remove(logfile)
+    print('Logfile: {}'.format(logfile))
+
+    logger = init_logger(logfile)
+
+    ret = aggregate_plots(args.output, args.working_dir, args.format, args.legend, logger)
 
     sys.exit(ret)
