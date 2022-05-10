@@ -176,7 +176,7 @@ def parse_stream(stream, id, logger):
     overflow = stream.find('overflow!!!')           # search stream for overflow
     logger.debug('Run {} search overflow: {}'.format(id, overflow))
 
-    integration_pattern = 'IFAIL=\s*2'              # search stream for IFAIL
+    integration_pattern = '.*IFAIL\s=\s*2'           # search stream for IFAIL
     integration_fail = re.search(integration_pattern, stream)
     logger.debug('Run {} search integration failure: {}'.format(id, integration_fail))
 
