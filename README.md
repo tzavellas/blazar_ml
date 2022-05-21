@@ -30,7 +30,7 @@ virtualenv hea_ml
 source hea_ml/bin/activate
 
 # Install dependencies
-pip install autopep8 astropy matplotlib numpy pandas
+pip install autopep8 astropy matplotlib numpy pandas scipy
 ```
 
 ## Usage
