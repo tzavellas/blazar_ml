@@ -4,8 +4,8 @@ import argparse
 import logging.config
 import os
 from pathlib import Path
-from plotter import Plotter
 import sys
+from interpolator import Interpolator
 
 
 _FILENAME = Path(__file__).stem
@@ -13,15 +13,13 @@ _FILENAME = Path(__file__).stem
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Plots spectra in a single file.')
-    parser.add_argument('-o', '--output', default='spectra', type=str, 
-                        help='Aggregate plot file of all spectra. Default is "spectra.png".')
+        description='Interpolates spectra and returns the interpolated values in a csv.')
+    parser.add_argument('-o', '--output', default='interpolated.csv', type=str,
+                        help='Interpolated values of all spectra. Default is "interpolated.csv".')
     parser.add_argument('-w', '--working-dir', default='output', type=str,
                         help='Root path where the individual spectra are stored. Default is "output".')
     parser.add_argument('-l', '--logging', type=str, default='logging.ini',
                         help='Log configuration. Default is logging.ini.')
-    parser.add_argument('--legend', action='store_true', default=False,
-                        help='Adds legend to the spectra plot. Default is false.')
 
     try:
         args = parser.parse_args()
@@ -47,16 +45,12 @@ def main():
         print('Failed to load config from {}. Exception {}'.format(logging_ini, e))
         logging.basicConfig(format='%(asctime)s %(name)s - %(levelname)s: %(message)s')
         logger = logging.getLogger(os.path.basename(__file__))
-        logger.setLevel(logging.DEBUG)
-    
+        logger.setLevel(logging.DEBUG)    
 
-    filename, file_extension = os.path.splitext(args.output)
-    if not file_extension:
-        logger.info('Output file without extension. Assuming .png')
-        filename = '{}.png'.format(filename)
-        
+    filename = args.output
     working_dir = os.path.abspath(args.working_dir)
-    ret = Plotter.aggregate_plots(filename, working_dir, legend=args.legend)
+
+    ret = Interpolator.interpolate_spectra(filename, working_dir, num=250)
 
     return ret
 

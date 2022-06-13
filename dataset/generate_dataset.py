@@ -10,6 +10,7 @@ from plotter import Plotter
 import logging.config
 import sys
 
+
 _FILENAME = Path(__file__).stem
 
 
