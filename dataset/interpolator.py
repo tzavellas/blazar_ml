@@ -66,7 +66,7 @@ class Interpolator:
         x = df[Interpolator._CSV_LABELS[0]]
         y = df[Interpolator._CSV_LABELS[1]]
         logger.debug('Interpolating {}...'.format(file))
-        tck = interpolate.splrep(x, y, k)
+        tck = interpolate.splrep(x, y, k=k)
 
         y_n = interpolate.splev(x_n, tck, der=0)
         return y_n
