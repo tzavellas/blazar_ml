@@ -10,7 +10,7 @@ class Interpolator:
     _CSV_LABELS = ('x', 'x^2*n(x)')
 
     @staticmethod
-    def interpolate_spectra(output, working_dir, x_start=-15, x_end=10, num=500):
+    def interpolate_spectra(output, working_dir, x_start=-15, x_end=10, num=500, k=1):
         '''
         Crawls working directory, reads each steady state and fits a spline.
             Parameters:
@@ -41,7 +41,7 @@ class Interpolator:
                 try:
                     logger.debug(
                         'Reading {} for interpolation...'.format(main))
-                    y_n = Interpolator.interpolate_spectrum(main, x_n)
+                    y_n = Interpolator.interpolate_spectrum(main, x_n, k)
                     out_dict['y_{}'.format(run_id)] = y_n
                 except BaseException as e:
                     logger.error('Reading {}: {}'.format(main, e))
@@ -53,7 +53,7 @@ class Interpolator:
         return err
 
     @staticmethod
-    def interpolate_spectrum(file, x_n):
+    def interpolate_spectrum(file, x_n, k):
         '''
         Reads a csv and interpolates the data. The values at which the interpolation is evaluated are given as input.
             Parameters:
@@ -66,7 +66,7 @@ class Interpolator:
         x = df[Interpolator._CSV_LABELS[0]]
         y = df[Interpolator._CSV_LABELS[1]]
         logger.debug('Interpolating {}...'.format(file))
-        tck = interpolate.splrep(x, y)
+        tck = interpolate.splrep(x, y, k)
 
         y_n = interpolate.splev(x_n, tck, der=0)
         return y_n

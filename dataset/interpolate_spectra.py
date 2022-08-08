@@ -18,6 +18,8 @@ def main():
                         help='Interpolated values of all spectra. Default is "interpolated.csv".')
     parser.add_argument('-w', '--working-dir', default='output', type=str,
                         help='Root path where the individual spectra are stored. Default is "output".')
+    parser.add_argument('-k', '--degree', default='1', type=int,
+                        help='The degree of the spline fit. Default is 1.')
     parser.add_argument('-l', '--logging', type=str, default='logging.ini',
                         help='Log configuration. Default is logging.ini.')
 
@@ -49,8 +51,9 @@ def main():
 
     filename = args.output
     working_dir = os.path.abspath(args.working_dir)
+    order = args.degree
 
-    ret = Interpolator.interpolate_spectra(filename, working_dir, num=250)
+    ret = Interpolator.interpolate_spectra(filename, working_dir, num=250, k=order)
 
     return ret
 
