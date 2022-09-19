@@ -1,0 +1,7 @@
+name: tf
+channels:
+  - conda-forge
+dependencies:
+  - python=3.6
+  - cudatoolkit=10.0
+  - tensorflow-gpu=1.15.0
