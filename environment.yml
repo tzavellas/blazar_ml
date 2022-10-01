@@ -5,3 +5,9 @@ dependencies:
   - python=3.6
   - cudatoolkit=10.0
   - tensorflow-gpu=1.15.0
+  - autopep8
+  - astropy
+  - matplotlib
+  - pandas
+  - peakutils
+  - spyder
