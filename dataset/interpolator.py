@@ -5,16 +5,20 @@ import pandas as pd
 from scipy import interpolate
 
 
+
+def clamp(val, smallest=-30, largest=0):
+    return np.maximum(smallest, np.minimum(val, largest))
+
+
 class Interpolator:
     _FORT81_MAIN_CSV = 'fort.81.main.csv'
     _CSV_LABELS = ('x', 'x^2*n(x)')
 
     @staticmethod
-    def interpolate_spectra(output, working_dir, x_start=-15, x_end=10, num=500, k=1):
+    def interpolate_spectra(working_dir, x_start=-15, x_end=10, num=500, k=1):
         '''
         Crawls working directory, reads each steady state and fits a spline.
             Parameters:
-                output (str):           The aggregate plot file.
                 working_dir (str):      The working directory.
                 x_start (int):          Start value to evaluate a spline function. Default is -15.
                 x_end (int):            End value to evaluate a spline function. Default is 10.
@@ -23,10 +27,6 @@ class Interpolator:
         logger = logging.getLogger(__name__)
 
         err = 0
-        output = os.path.join(working_dir, output)
-        if os.path.exists(output):
-            logger.warning('Plot {} exists. Removing...'.format(output))
-            os.remove(output)
 
         out_dict = dict()
         x_n = np.linspace(x_start, x_end, num)
@@ -42,15 +42,13 @@ class Interpolator:
                     logger.debug(
                         'Reading {} for interpolation...'.format(main))
                     y_n = Interpolator.interpolate_spectrum(main, x_n, k)
-                    out_dict['y_{}'.format(run_id)] = y_n
+                    clamped = clamp(y_n)
+                    out_dict['y_{}'.format(run_id)] = clamped
                 except BaseException as e:
                     logger.error('Reading {}: {}'.format(main, e))
                     err = err + 1
 
-        logger.debug('Storing dict in file {}...'.format(output))
-        df = pd.DataFrame(out_dict)
-        df.to_csv(output, index=False)
-        return err
+        return err, out_dict
 
     @staticmethod
     def interpolate_spectrum(file, x_n, k):

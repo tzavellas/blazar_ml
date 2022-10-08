@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env /home/mapet/Progs/anaconda3/envs/tf/bin/python
 
 from astropy import constants as const
 import argparse

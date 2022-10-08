@@ -2,12 +2,12 @@ name: tf
 channels:
   - conda-forge
 dependencies:
-  - python=3.6
-  - cudatoolkit=10.0
+  - python=3.7
   - tensorflow-gpu=1.15.0
-  - autopep8
-  - astropy
-  - matplotlib
+  - spyder=5.3.3
   - pandas
+  - matplotlib
+  - numpy
+  - astropy
   - peakutils
-  - spyder
+#  - autopep8

@@ -1,9 +1,10 @@
-#!/usr/bin/python
+#!/usr/bin/env /home/mapet/Progs/anaconda3/envs/tf/bin/python
 
 import argparse
 import logging.config
 import os
 from pathlib import Path
+import pandas as pd
 import sys
 from interpolator import Interpolator
 
@@ -11,7 +12,7 @@ from interpolator import Interpolator
 _FILENAME = Path(__file__).stem
 
 
-def main():
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Interpolates spectra and returns the interpolated values in a csv.')
     parser.add_argument('-o', '--output', default='interpolated.csv', type=str,
@@ -27,11 +28,11 @@ def main():
         args = parser.parse_args()
     except argparse.ArgumentError as arg_e:
         print('parse_args: {}'.format(arg_e), file=sys.stderr)
-        return 1
+        sys.exit(1)
 
     if not os.path.exists(args.working_dir):
         print('Working directory {} does not exist'.format(args.working_dir))
-        return 1
+        sys.exit(1)
 
     logfile = os.path.join(args.working_dir, '{}.log'.format(_FILENAME))
     if os.path.exists(logfile):
@@ -53,10 +54,14 @@ def main():
     working_dir = os.path.abspath(args.working_dir)
     order = args.degree
 
-    ret = Interpolator.interpolate_spectra(filename, working_dir, num=250, k=order)
+    output = os.path.join(working_dir, filename)
+    if os.path.exists(output):
+        logger.warning('Plot {} exists. Removing...'.format(output))
+        os.remove(output)
 
-    return ret
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+    err, out_dict = Interpolator.interpolate_spectra(working_dir, num=250, k=order)
+    
+    logger.debug('Storing dict in file {}...'.format(output))
+    df = pd.DataFrame(out_dict)
+    df.to_csv(output, index=False)
+    sys.exit(err)

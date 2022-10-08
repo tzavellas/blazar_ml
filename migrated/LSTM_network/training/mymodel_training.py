@@ -249,12 +249,19 @@ if __name__ == "__main__":
     train_size=int(len(results)*0.9/bsize)*bsize
     valid_size=len(results)-train_size
     
-    train_set = results[:train_size,0:13], results[:train_size,13:514], results[:train_size,-2:-1] #parameters,distribution,peak value
-    valid_set = results[-valid_size:,0:13], results[-valid_size:,13:514], results[-valid_size:,-2:-1]
+    param_start = 0
+    spect_start = 6
+    spect_end = len(mpg[0]) - 1
 
+    train_set = results[:train_size, param_start:spect_start], results[:train_size, spect_start:spect_end], results[:train_size, -1:] #parameters, spectrum, peak_value
+    valid_set = results[-valid_size:, param_start:spect_start], results[-valid_size:, spect_start:spect_end], results[-valid_size:, -1:]
+    #train_set = results[:train_size,0:13], results[:train_size,13:514], results[:train_size,-2:-1] #parameters,distribution,peak value
+    #valid_set = results[-valid_size:,0:13], results[-valid_size:,13:514], results[-valid_size:,-2:-1]
 
+    print('T={}'.format(spect_end - spect_start))
     train_mode = True
-    mymodel = Model("saved_model", train_mode=train_mode, input_dim=13, T=501)
+    #mymodel = Model("saved_model", train_mode=train_mode, input_dim=13, T=501)
+    mymodel = Model("saved_model", train_mode=True, input_dim=spect_start, T=spect_end - spect_start)
     if train_mode == True:
         mymodel.train(train_set, valid_set, maxEpoch=500) # # of iters = maxepoch * N/bs
             

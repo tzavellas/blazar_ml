@@ -1,7 +1,7 @@
 # User-defined files
-saved_model
-save_j1
-tf_logs_j1
+saved_model*
+save_j1*
+tf_logs_j1*
 report.txt
 migrated/PDE\ model\ simulation
 migrated/SDE\ model\ simulation
