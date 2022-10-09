@@ -6,11 +6,13 @@ Modified by Shangying on June 23, 2017
 """
 
 import tensorflow as tf
+import pandas as pd
 import numpy as np
 import csv
 import os
 import sys
 import errno
+from tqdm import trange
 from datetime import datetime
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -107,7 +109,7 @@ class Model(object):
             
             i = 0
             loss_v=np.zeros((maxEpoch,8))
-            for epoch in range(maxEpoch): # range for python3
+            for epoch in trange(maxEpoch):
                 Lds, Lps = [], []
                 Ldvs, Lpvs = [], []                
                 for xtrain, ytrain, ptrain in self.data_loader(train_set, self.batch_size, shuffle=True):
@@ -127,7 +129,7 @@ class Model(object):
                         self.file_writer.add_summary(summary_str_p, i)
                 for xvalid, yvalid, pvalid in self.data_loader(valid_set, self.batch_size):
                     yvalid = yvalid[:,::-1]
-                    
+
                     Lev, Lpv, ysv, hv = sess.run([self.e_loss, self.p_loss, self.ys, self.h], feed_dict={self.x: xvalid, self.y: yvalid, self.ymax: pvalid})
                     Ldv=Lev-Lpv
                     Ldvs.append(Ldv)
@@ -140,27 +142,26 @@ class Model(object):
                 Lp_train_std = np.array(Lps).std()
                 Ld_valid_std = np.array(Ldvs).std()
                 Lp_valid_std = np.array(Lpvs).std()
-#                pdb.set_trace()
-                loss_v[epoch,:]=[Ld_train_mean, Lp_train_mean, Ld_valid_mean, Lp_valid_mean, Ld_train_std, Lp_train_std, Ld_valid_std, Lp_valid_std]                
+                loss_v[epoch,:]=[Ld_train_mean, Lp_train_mean, Ld_valid_mean, Lp_valid_mean, Ld_train_std, Lp_train_std, Ld_valid_std, Lp_valid_std]
+                if ((epoch + 1) % 100 == 0):
+                    self.save_model(saver, sess, step=epoch)
 
-              
-                self.save_model(saver, sess, step=epoch)
-            if not os.path.exists("save_j1"):
-                try:
-                    os.mkdir('save_j1')
-                except OSError as e:
-                    if e.errno != errno.EEXIST:
-                        raise
+            # if not os.path.exists("save_j1"):
+            #     try:
+            #         os.mkdir('save_j1')
+            #     except OSError as e:
+            #         if e.errno != errno.EEXIST:
+            #             raise
             #np.savetxt('save_j1/ys.txt', ys)
             #np.ndarray(ys).tofile('save_j1/ys.txt', sep=' ')
-            np.savetxt('save_j1/ytrain.txt', ytrain )
-            np.savetxt('save_j1/h.txt',h )
-            np.savetxt('save_j1/ptrain.txt',ptrain )
-            #np.savetxt('save_j1/ysv.txt', ysv )
-            np.savetxt('save_j1/yvalid.txt', yvalid )
-            np.savetxt('save_j1/hv.txt',hv )
-            np.savetxt('save_j1/pvalid.txt',pvalid )  
-            np.savetxt('save_j1/loss.txt', loss_v )
+            # np.savetxt('save_j1/ytrain.txt', ytrain )
+            # np.savetxt('save_j1/h.txt',h )
+            # np.savetxt('save_j1/ptrain.txt',ptrain )
+            # #np.savetxt('save_j1/ysv.txt', ysv )
+            # np.savetxt('save_j1/yvalid.txt', yvalid )
+            # np.savetxt('save_j1/hv.txt',hv )
+            # np.savetxt('save_j1/pvalid.txt',pvalid )
+            # np.savetxt('save_j1/loss.txt', loss_v )
             self.file_writer.close()
     
     def data_loader(self, train_set, batchsize, shuffle=False): 
@@ -234,34 +235,23 @@ class Model(object):
 
 if __name__ == "__main__":
     
-    # TODO: preprocessing dataset
-    # Load data from csv file
-    file = sys.argv[1]
-    with open(file) as csvfile1:
-    #with open('all_data.csv') as csvfile1:
-        mpg = list(csv.reader(csvfile1))
-        results=np.array(mpg).astype("float")
-        
-    #assign 1500 data set to train set and the rest to valid set
-        #data structure: 0:25 input parameters; 25:205 normalized output; end: peak value of the output
+    df = pd.read_csv(sys.argv[1], header=None, index_col=0)
+    df = df.dropna().reset_index(drop=True)
 
-    bsize=100
-    train_size=int(len(results)*0.9/bsize)*bsize
-    valid_size=len(results)-train_size
+    bsize=df.shape[0]
+    train_size=int(bsize*0.9)
+    valid_size=bsize-train_size
+    results = np.array(df)
     
     param_start = 0
     spect_start = 6
-    spect_end = len(mpg[0]) - 1
+    spect_end = df.shape[1] - 1
 
     train_set = results[:train_size, param_start:spect_start], results[:train_size, spect_start:spect_end], results[:train_size, -1:] #parameters, spectrum, peak_value
     valid_set = results[-valid_size:, param_start:spect_start], results[-valid_size:, spect_start:spect_end], results[-valid_size:, -1:]
-    #train_set = results[:train_size,0:13], results[:train_size,13:514], results[:train_size,-2:-1] #parameters,distribution,peak value
-    #valid_set = results[-valid_size:,0:13], results[-valid_size:,13:514], results[-valid_size:,-2:-1]
 
     print('T={}'.format(spect_end - spect_start))
-    train_mode = True
-    #mymodel = Model("saved_model", train_mode=train_mode, input_dim=13, T=501)
+
     mymodel = Model("saved_model", train_mode=True, input_dim=spect_start, T=spect_end - spect_start)
-    if train_mode == True:
-        mymodel.train(train_set, valid_set, maxEpoch=500) # # of iters = maxepoch * N/bs
+    mymodel.train(train_set, valid_set, maxEpoch=500) # #of iters = maxepoch * N/bs
             

@@ -8,19 +8,19 @@ import pandas as pd
 import tensorflow as tf
 import numpy as np
 import tensorflow.contrib.layers as tcl
-import csv
 import os
-from scipy import stats
-import pdb
-import peakutils
+# from scipy import stats
+# import peakutils
 import sys
-from peakutils.plot import plot as pplot
+# from peakutils.plot import plot as pplot
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
 tf.compat.v1.reset_default_graph()
 
-def rmse(predictions, targets):
-    return np.sqrt(((predictions - targets) ** 2).mean())
+
+# def rmse(predictions, targets):
+#     return np.sqrt(((predictions - targets) ** 2).mean())
+
 
 def de_normalize(data, min_val=-30, max_val=0):
     return min_val + (max_val - min_val) * data
@@ -246,10 +246,6 @@ class Model(object):
 
 if __name__ == "__main__":
     
-    # TODO: preprocessing dataset
-    # Load data from csv file
-
-
     df = pd.read_csv(sys.argv[1], index_col=0)
     bsize=df.shape[0]
     center=500
@@ -257,9 +253,8 @@ if __name__ == "__main__":
     length=2*center-1
     x_axis=np.linspace(0, length, num=length)
     thred_pt=0.1
-    #sample_size=1000000
+
     sample_size=bsize
-    # saved_matrix = np.zeros((sample_size, 257))
 
     par1 = np.expand_dims(df['radius'].to_numpy(), axis=1)
     par2 = np.expand_dims(df['bfield'].to_numpy(), axis=1)
@@ -269,24 +264,27 @@ if __name__ == "__main__":
     par6 = np.expand_dims(df['slelints'].to_numpy(), axis=1)
     
     test_set = np.concatenate((par1, par2, par3, par4, par5, par6), axis=1)
-    mymodel = Model( train_mode=False, input_dim=6, T=500, batch_size=bsize)
+    mymodel = Model(train_mode=False, input_dim=6, T=500, batch_size=bsize)
     saver = tf.compat.v1.train.Saver()
     
     model_path = sys.argv[2]
     
     with tf.compat.v1.Session() as sess:
         saver.restore(sess, model_path + '/mymodel-499') 
-        ysts1=np.array([], dtype=np.float64).reshape(center,0,1)
-        hts1=np.array([], dtype=np.float64).reshape(0,1)
+        ysts1=np.zeros((center, 0, 1))
+        hts1=np.zeros((0, 1))
 
         # code to load test data
         for xtest in Model.data_loader2(mymodel, test_set, bsize):
             yst1, ht1 = sess.run([mymodel.ys,mymodel.h], feed_dict={mymodel.x: xtest})
-            #pdb.set_trace() 
             ysts1 = np.concatenate((ysts1, yst1), axis=1)
             hts1 = np.concatenate((hts1, ht1), axis=0)
-            
 
+        df_out = pd.DataFrame()
+        df_out = process(ysts1, df_out)
+        df_out.to_csv(sys.argv[3])
+
+    sys.exit(0)
 
     #pdb.set_trace() 
     # with tf.compat.v1.Session() as sess:
@@ -330,12 +328,7 @@ if __name__ == "__main__":
 #            yst5, ht5 = sess.run([mymodel.ys,mymodel.h], feed_dict={mymodel.x: xtest})
 #            ysts5 = np.concatenate((ysts5, yst5), axis=1)
 #            hts5 = np.concatenate((hts5, ht5), axis=0)
-            
 
-    df_out = pd.DataFrame()
-    df_out = process(ysts1, df_out)
-    df_out.to_csv(sys.argv[3])
-    
     # m_all=np.zeros((sample_size, 4))
     # mse_gt=np.zeros((sample_size, 1))
     # idxs=np.zeros((sample_size, 2))

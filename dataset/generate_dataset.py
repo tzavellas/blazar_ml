@@ -135,24 +135,25 @@ if __name__ == "__main__":
 
     logger.info('Storing dict in file {}...'.format(interpolated_file))
     interpolated = pd.DataFrame(out_dict)
-    interpolated.to_csv(interpolated_file, index=False)
+    interpolated.to_csv(interpolated_file, index=False, na_rep='NaN')
 
     normalized = pd.DataFrame()
     skipped = []
 
-    rows, cols = interpolated.shape
-    for i in range(1, cols):
-        run = inputs_dataframe.loc[i-1, 'run']
-        x = inputs_dataframe.loc[i-1, 'radius':'slelints']
-        s = 'y_{}'.format(int(run))
-        if (s in interpolated.columns):
+    for index, row in inputs_dataframe.iterrows():
+        s = 'y_{}'.format(index)
+        x = row['radius':'slelints']
+        if row['success']:
             y = interpolated.loc[:, s]
             y_n = normalize(y)
-            w = y_n.append(pd.Series([np.amax(y_n)]), ignore_index=True)
-            z = x.append(w, ignore_index=True)
+            y_n = y_n.append(pd.Series([np.amax(y_n)]))
+            z = x.append(y_n)
             normalized = normalized.append(z, ignore_index=True)
         else:
+            normalized = normalized.append(pd.Series(dtype='float64'), ignore_index=True)
             skipped.append(s)
+
+
     logger.info('Skipped: {}'.format(skipped))
 
     normalized_file = 'normalized.csv'
@@ -161,7 +162,7 @@ if __name__ == "__main__":
         logger.warning('{} exists. Removing...'.format(normalized_file))
         os.remove(normalized_file)
 
-    normalized.to_csv(normalized_file, header=False, index=False)
+    normalized.to_csv(normalized_file, header=False, na_rep='NaN')
 
     logger.info('Done')
     sys.exit(0)

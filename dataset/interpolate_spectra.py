@@ -59,9 +59,9 @@ if __name__ == "__main__":
         logger.warning('Plot {} exists. Removing...'.format(output))
         os.remove(output)
 
-    err, out_dict = Interpolator.interpolate_spectra(working_dir, num=250, k=order)
+    err, out_dict = Interpolator.interpolate_spectra(working_dir)
     
     logger.debug('Storing dict in file {}...'.format(output))
     df = pd.DataFrame(out_dict)
-    df.to_csv(output, index=False)
+    df.to_csv(output, index=False, na_rep='NaN')
     sys.exit(err)

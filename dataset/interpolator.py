@@ -28,27 +28,35 @@ class Interpolator:
 
         err = 0
 
-        out_dict = dict()
+        interpolated_dict = dict()
         x_n = np.linspace(x_start, x_end, num)
-        out_dict['x'] = x_n
+        interpolated_dict['x'] = x_n
 
         for (root, dirs, files) in os.walk(working_dir, topdown=False):
             main = Interpolator._FORT81_MAIN_CSV
-            if main in files:
+            run_id = -1
+            try:
                 run_id = int(os.path.basename(root))
+            except ValueError:
+                continue
+            s = 'y_{}'.format(run_id)
+            if main in files:
                 main = os.path.join(root, main)
-
                 try:
                     logger.debug(
                         'Reading {} for interpolation...'.format(main))
                     y_n = Interpolator.interpolate_spectrum(main, x_n, k)
                     clamped = clamp(y_n)
-                    out_dict['y_{}'.format(run_id)] = clamped
+                    interpolated_dict[s] = clamped
                 except BaseException as e:
                     logger.error('Reading {}: {}'.format(main, e))
                     err = err + 1
+            else:
+                y_n = np.empty(len(x_n))
+                y_n[:] = np.NaN
+                interpolated_dict[s] = y_n
 
-        return err, out_dict
+        return err, interpolated_dict
 
     @staticmethod
     def interpolate_spectrum(file, x_n, k):
