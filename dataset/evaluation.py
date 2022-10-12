@@ -9,6 +9,7 @@ Created on Sat Oct  8 23:48:34 2022
 from astropy import constants as const
 from astropy import units as u
 import numpy as np
+import os
 import pandas as pd
 import sys
 
@@ -63,4 +64,5 @@ for name, y_predicted in df_prediction.iteritems():
 
 df = pd.DataFrame(rmses, columns=['RMSE'])
 df.to_csv(sys.argv[3])
-print('Average RMSE: {}'.format(s_rms / (count_rms - 1)))
+case = os.path.dirname(sys.argv[2]).split('/')[-1]
+print('RMSE {}: {:.4f}'.format(case, s_rms / (count_rms - 1)))
