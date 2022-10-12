@@ -245,6 +245,14 @@ class Model(object):
             
 
 if __name__ == "__main__":
+    n = len(sys.argv)
+
+    if n < 5:
+        batchSize = 100
+    else:
+        batchSize = int(sys.argv[4])
+
+    print('Batch size: {}'.format(batchSize))
     
     df = pd.read_csv(sys.argv[1], index_col=0)
     bsize=df.shape[0]
@@ -264,7 +272,7 @@ if __name__ == "__main__":
     par6 = np.expand_dims(df['slelints'].to_numpy(), axis=1)
     
     test_set = np.concatenate((par1, par2, par3, par4, par5, par6), axis=1)
-    mymodel = Model(train_mode=False, input_dim=6, T=500, batch_size=bsize)
+    mymodel = Model(train_mode=False, input_dim=6, T=500, batch_size=batchSize)
     saver = tf.compat.v1.train.Saver()
     
     model_path = sys.argv[2]
@@ -275,7 +283,7 @@ if __name__ == "__main__":
         hts1=np.zeros((0, 1))
 
         # code to load test data
-        for xtest in Model.data_loader2(mymodel, test_set, bsize):
+        for xtest in Model.data_loader2(mymodel, test_set, batchSize):
             yst1, ht1 = sess.run([mymodel.ys,mymodel.h], feed_dict={mymodel.x: xtest})
             ysts1 = np.concatenate((ysts1, yst1), axis=1)
             hts1 = np.concatenate((hts1, ht1), axis=0)

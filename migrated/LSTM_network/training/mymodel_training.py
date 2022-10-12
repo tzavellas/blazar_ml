@@ -231,10 +231,17 @@ class Model(object):
         with tf.compat.v1.variable_scope("e_yprev", reuse=self.DO_SHARE):
             yp_init = tf.compat.v1.get_variable('yp_init', [self.batch_size, self.prev], initializer=tf.compat.v1.constant_initializer(0.5))
         return yp_init if t == 0 else tf.concat([self.y_prev[:,1:], self.ys[t-1]], 1)
-            
+
 
 if __name__ == "__main__":
+    n = len(sys.argv)
     
+    if n < 4:
+        batchSize = 100
+    else:
+        batchSize = int(sys.argv[3])
+    print('Batch size: {}'.format(batchSize))
+
     df = pd.read_csv(sys.argv[1], header=None, index_col=0)
     df = df.dropna().reset_index(drop=True)
 
@@ -252,6 +259,6 @@ if __name__ == "__main__":
 
     print('T={}'.format(spect_end - spect_start))
 
-    mymodel = Model("saved_model", train_mode=True, input_dim=spect_start, T=spect_end - spect_start)
+    mymodel = Model(sys.argv[2], train_mode=True, input_dim=spect_start, T=spect_end - spect_start, batch_size=batchSize)
     mymodel.train(train_set, valid_set, maxEpoch=500) # #of iters = maxepoch * N/bs
             

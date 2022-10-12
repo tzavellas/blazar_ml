@@ -36,7 +36,7 @@ if __name__ == "__main__":
                         help='Log configuration. Default is logging.ini.')
     parser.add_argument('-n', '--num-proc', type=int, default=None,
                         help='Number of processes to launch. Default is number of system threads')
-    parser.add_argument('-p', '--plot-spectra', action='store_true', default=True,
+    parser.add_argument('-p', '--plot-spectra', action='store_true', default=False,
                         help='Aggregate plot of all spectra in a file "spectra.png". Default is True.')
     parser.add_argument('-x', '--extra-args', default=[], nargs='*',
                         help='List of extra arguments to pass to the program. Default is [].')
