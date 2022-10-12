@@ -1,5 +1,6 @@
 # User-defined files
 saved_model*
+migrated*
 save_j1*
 tf_logs_j1*
 report.txt

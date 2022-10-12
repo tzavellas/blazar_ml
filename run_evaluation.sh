@@ -1,4 +1,5 @@
 #!/bin/sh
+
 cd dataset
 
 python evaluation.py ~/PROJECTS_MP/datasets/dataset_100/interpolated.csv ~/PROJECTS_MP/hea_ml.git/prediction_1k_b50/denormalized_100.csv ~/PROJECTS_MP/hea_ml.git/prediction_1k_b50/rms_100.csv
