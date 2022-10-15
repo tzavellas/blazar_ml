@@ -15,7 +15,7 @@ newgrp docker
 
 Build docker
 ------------
-docker build -f ./docker/Dockerfile ./docker -t hea_ml
+docker build -f Dockerfile . --tag tf2 --output ../../docker-tf2
 
 Run docker
 ----------

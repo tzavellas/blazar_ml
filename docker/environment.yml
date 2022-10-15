@@ -1,0 +1,12 @@
+name: tf2
+channels:
+  - conda-forge
+dependencies:
+  - tensorflow-gpu=2
+  - spyder=5.3.3
+  - pandas
+  - matplotlib
+  - numpy
+  - astropy
+  - scikit-learn
+  - autopep8
