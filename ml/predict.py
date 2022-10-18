@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
-
+import common
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
 import sys
-import tensorflow as tf
 from tensorflow import keras
-import train
 
 
 def de_normalize(data, min_val=-30, max_val=0):
@@ -17,8 +15,7 @@ def de_normalize(data, min_val=-30, max_val=0):
 def plot(y, i, label):
     plt.plot(y[i], '.', label=label)
     plt.ylim(-30, 0)
-    plt.xlim(300, 450)
-    
+    # plt.xlim(300, 450)
 
 
 model_path = sys.argv[1]
@@ -27,7 +24,7 @@ model = keras.models.load_model(model_path)
 
 new_dataset = sys.argv[2]
 
-new_set, new_test = train.load_data(new_dataset, 0) # returns train and test sets
+new_set, new_test = common.load_data(new_dataset, 0) # returns train and test sets
 
 y_d = de_normalize(new_set[1])
 
