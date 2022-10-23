@@ -24,8 +24,8 @@ if __name__ == "__main__":
 
     train_full, test = common.load_data(dataset_path, 0.2) # returns train and test sets
 
-    model = dnn.build_model(n_hidden=4, n_neurons=1260, learning_rate=6.7e-3)
-    # model = dnn.build_model_avg(n_base=2, n_hidden=4, n_neurons=1260, learning_rate=6.7e-3)
+    # model = dnn.build_model(n_hidden=4, n_neurons=1260, learning_rate=6.7e-3)
+    model = dnn.build_model_avg()
     # model = dnn.build_model_concat(n_base=2, n_hidden=4, n_neurons=1260, learning_rate=6.7e-3)
 
     # lr_scheduler = keras.callbacks.ReduceLROnPlateau(factor=0.5, patience=10)

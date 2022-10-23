@@ -21,7 +21,7 @@ def build_model(n_hidden=4, n_neurons=1000, learning_rate=1e-3, input_shape=[6])
     return model
 
 
-def build_model_avg(n_base=2, n_hidden=4, n_neurons=1000, learning_rate=1e-3, input_shape=[6]):
+def build_model_avg(n_base=2, n_hidden=5, n_neurons=634, learning_rate=0.0027031221642068, input_shape=[6]):
     input_ = keras.layers.Input(shape=input_shape)
 
     base_out = base_dense(n_hidden, n_neurons, input_shape)

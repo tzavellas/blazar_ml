@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
     model = rnd_search_cv.best_estimator_.model
 
-    with open('regress_report.txt', 'w') as f:
+    with open('regress_dnn_report.txt', 'w') as f:
         f.write('best parameters: {}\n\n'.format(rnd_search_cv.best_params_))
         f.write('best score: {}\n\n'.format(rnd_search_cv.best_score_))
         f.write(str(rnd_search_cv.cv_results_))

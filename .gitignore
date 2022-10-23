@@ -1,4 +1,5 @@
 # User-defined files
+*.h5
 saved_model*
 migrated*
 save_j1*
