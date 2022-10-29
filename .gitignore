@@ -1,4 +1,6 @@
 # User-defined files
+*y_pred.csv
+*.txt
 *.h5
 saved_model*
 migrated*
