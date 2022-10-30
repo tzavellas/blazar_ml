@@ -3,7 +3,7 @@ import tensorflow as tf
 from tensorflow import keras
 
 
-def build_model(n_hidden=2, n_neurons=10, learning_rate=1e-3, input_shape=(6, 1)):
+def build_model(n_hidden=3, n_neurons=68, learning_rate=0.001288946565028537, input_shape=(6, 1)):
     model = keras.models.Sequential()
     model.add(keras.layers.SimpleRNN(n_neurons, input_shape=input_shape, return_sequences=True, dtype=tf.float64))
     for layer in range(n_hidden):

@@ -26,15 +26,14 @@ if __name__ == "__main__":
 
     train_full, test = common.load_data(dataset_path, 0.2) # returns train and test sets
 
-    # model = rnn.build_model(n_hidden=3, n_neurons=100)
-    model = rnn.build_model_lstm(n_hidden=3, n_neurons=100)
+    model = rnn.build_model(n_hidden=3, n_neurons=68, learning_rate=0.001288946565028537)
+    # model = rnn.build_model_lstm(n_hidden=3, n_neurons=100)
 
 
     model.summary()
 
     # early_stop = keras.callbacks.EarlyStopping(monitor='root_mean_squared_error', patience=10)
-    history = model.fit(train_full[0], train_full[1], epochs=40, validation_split=.2,
-                        batch_size=25
+    history = model.fit(train_full[0], train_full[1], epochs=150, validation_split=.2,
     #                     # callbacks=[early_stop]
                         )
 
