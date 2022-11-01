@@ -9,8 +9,8 @@ from tensorflow import keras
 import rnn
 
 
-def regress_rnn():
-    keras_reg = keras.wrappers.scikit_learn.KerasRegressor(rnn.build_model)
+def regress_simple_rnn():
+    keras_reg = keras.wrappers.scikit_learn.KerasRegressor(rnn.build_simple_rnn)
 
     param_distribs = {
         "n_hidden": [2, 3, 4, 5],
@@ -24,7 +24,21 @@ def regress_rnn():
 
 
 def regress_lstm():
-    keras_reg = keras.wrappers.scikit_learn.KerasRegressor(rnn.build_model_lstm)
+    keras_reg = keras.wrappers.scikit_learn.KerasRegressor(rnn.build_lstm)
+
+    param_distribs = {
+        "n_hidden": [2, 3, 4, 5],
+        "n_neurons": np.arange(10, 2000),
+        "learning_rate": reciprocal(1e-5, 1e-2),
+    }
+
+    rnd_search_cv = RandomizedSearchCV(keras_reg, param_distribs, n_iter=20, cv=3)
+
+    return rnd_search_cv
+
+
+def regress_gru():
+    keras_reg = keras.wrappers.scikit_learn.KerasRegressor(rnn.build_gru)
 
     param_distribs = {
         "n_hidden": [2, 3, 4, 5],
@@ -45,11 +59,14 @@ if __name__ == "__main__":
     train_full, test = common.load_data(dataset_path, 0.2) # returns train and test sets
 
     # rnd_search_cv = regress_rnn()
-    rnd_search_cv = regress_lstm()
-    # rnd_search_cv = regress_dnn_concat()
+    # rnd_search_cv = regress_lstm()
+    rnd_search_cv = regress_gru()
 
-    rnd_search_cv.fit(*train_full, epochs=150, validation_split=.2,
-                      callbacks=[keras.callbacks.EarlyStopping(patience=10)])
+    rnd_search_cv.fit(*train_full, epochs=100, validation_split=.2,
+                      callbacks=[keras.callbacks.EarlyStopping(patience=5),
+                                 keras.callbacks.BackupAndRestore(backup_dir='/tmp/cuda_backup', save_freq=10),
+                                 keras.callbacks.TensorBoard('./logs', update_freq='epoch', histogram_freq=5)
+                                 ])
 
     model = rnd_search_cv.best_estimator_.model
 
