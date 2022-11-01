@@ -1,4 +1,5 @@
 # User-defined files
+logs
 *y_pred.csv
 *.txt
 *.h5
