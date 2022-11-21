@@ -4,7 +4,7 @@ import numpy as np
 import os
 import sys
 from tensorflow import keras
-import dnn
+import rnn
 
 
 if __name__ == "__main__":
@@ -15,12 +15,12 @@ if __name__ == "__main__":
 
     train_full, test = common.load_data(dataset_path, 0.2) # returns train and test sets
 
-    model = dnn.build_model()
+    model = rnn.build_lstm()
 
     model.summary()
 
-    history = model.fit(train_full[0], train_full[1], epochs=600, validation_split=.2,
-                        callbacks=[keras.callbacks.TensorBoard('./logs/dnn', update_freq='epoch')])
+    history = model.fit(train_full[0], train_full[1], epochs=500, validation_split=.2,
+                        callbacks=[keras.callbacks.TensorBoard('./logs/lstm', update_freq='epoch')])
 
     mse_test = model.evaluate(*test)
 
@@ -28,5 +28,5 @@ if __name__ == "__main__":
         working_dir = sys.argv[2]
     else:
         working_dir = os.path.dirname(os.path.realpath(__file__))
-    save_path = os.path.join(working_dir, 'hea_dnn.h5')
+    save_path = os.path.join(working_dir, 'hea_lstm.h5')
     model.save(save_path)

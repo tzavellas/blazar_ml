@@ -16,7 +16,7 @@ def build_model(n_hidden=4, n_neurons=1000, learning_rate=1e-3, input_shape=[6])
     model = base_dense(n_hidden, n_neurons, input_shape)
     optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
     model.compile(loss=keras.losses.MeanSquaredLogarithmicError(),
-                  metrics=[keras.metrics.RootMeanSquaredError()],
+                  metrics=[keras.metrics.MeanSquaredLogarithmicError(), keras.metrics.MeanSquaredError()],
                   optimizer=optimizer)
     return model
 

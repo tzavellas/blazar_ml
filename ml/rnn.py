@@ -25,13 +25,13 @@ def build_lstm(n_hidden=3, n_neurons=951, learning_rate=0.0004276218750584223, i
     model.add(keras.layers.LSTM(n_neurons))
     model.add(keras.layers.Dense(500))
     optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
-    model.compile(loss=keras.losses.MeanSquaredError(),
-                  metrics=[keras.metrics.RootMeanSquaredError()],
+    model.compile(loss=keras.losses.MeanSquaredLogarithmicError(),
+                  metrics=[keras.metrics.RootMeanSquaredError(), keras.metrics.MeanSquaredLogarithmicError()],
                   optimizer=optimizer)
     return model
 
 
-def build_gru(n_hidden=3, n_neurons=951, learning_rate=0.0004276218750584223, input_shape=(6, 1)):
+def build_gru(n_hidden=5, n_neurons=184, learning_rate=0.00017240218306809038, input_shape=(6, 1)):
     model = keras.models.Sequential()
     model.add(keras.layers.GRU(n_neurons, input_shape=input_shape, return_sequences=True, dtype=tf.float64))
     for layer in range(n_hidden):
