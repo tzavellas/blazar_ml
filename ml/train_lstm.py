@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     model.summary()
 
-    history = model.fit(train_full[0], train_full[1], epochs=500, validation_split=.2,
+    history = model.fit(train_full[0], train_full[1], epochs=1000, validation_split=.2,
                         callbacks=[keras.callbacks.TensorBoard('./logs/lstm', update_freq='epoch')])
 
     mse_test = model.evaluate(*test)

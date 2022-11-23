@@ -156,7 +156,7 @@ class CodeLauncher:
         df = pd.DataFrame()
         df[labels[0]] = x
         df[labels[1]] = y
-        df.to_csv(file, index=False, float_format='%.6e', line_terminator='\n')
+        df.to_csv(file, index=False, float_format='%.6e', lineterminator='\n')
         return
 
     @staticmethod

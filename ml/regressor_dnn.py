@@ -60,12 +60,13 @@ if __name__ == "__main__":
 
     train_full, test = common.load_data(dataset_path, 0.2) # returns train and test sets
 
-    # rnd_search_cv = regress_dnn()
-    rnd_search_cv = regress_dnn_avg()
+    rnd_search_cv = regress_dnn()
+    # rnd_search_cv = regress_dnn_avg()
     # rnd_search_cv = regress_dnn_concat()
 
-    rnd_search_cv.fit(*train_full, epochs=150, validation_split=.2,
-                      callbacks=[keras.callbacks.EarlyStopping(patience=10)])
+    rnd_search_cv.fit(*train_full, epochs=600, validation_split=.2,
+                      # callbacks=[keras.callbacks.EarlyStopping(patience=10)]
+                      )
 
     model = rnd_search_cv.best_estimator_.model
 

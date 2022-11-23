@@ -52,8 +52,8 @@ if __name__ == "__main__":
         sys.exit(1)
 
     if not os.path.exists(args.working_dir):
-        print('Working directory {} does not exist'.format(args.working_dir))
-        sys.exit(1)
+        print('Working directory {} does not exist. Creating it..'.format(args.working_dir))
+        os.mkdir(args.working_dir)
 
     if not os.path.exists(args.input):
         print('Input csv {} does not exist'.format(args.input))

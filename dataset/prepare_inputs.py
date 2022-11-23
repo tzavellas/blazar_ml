@@ -97,7 +97,7 @@ def generate_sample_inputs(N, out):
     
     # write to file
     df.to_csv(out, index=True, index_label='run',
-              float_format='%.6e', line_terminator='\n')
+              float_format='%.6e', lineterminator='\n')
     
     return
     
