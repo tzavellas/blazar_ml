@@ -10,4 +10,5 @@ dependencies:
   - numpy
   - astropy
   - peakutils
+  - dtaidistance
 #  - autopep8

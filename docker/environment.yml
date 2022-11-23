@@ -10,3 +10,4 @@ dependencies:
   - astropy
   - scikit-learn
   - autopep8
+  - dtaidistance
