@@ -1,54 +1,80 @@
 #!/usr/bin/env python3
+import argparse
 import common
-import matplotlib.pyplot as plt
+import json
 import numpy as np
 import os
 import sys
 from tensorflow import keras
-import rnn
 import dnn
-
-
-def plot_loss(history):
-    plt.plot(history.history['loss'], label='loss')
-    plt.plot(history.history['val_loss'], label='val_loss')
-    plt.xlabel('Epoch')
-    plt.ylabel('Error')
-    plt.legend()
-    plt.grid(True)
+import rnn
 
 
 if __name__ == "__main__":
-    
+    filename = os.path.basename(__file__).split('.')[0]
+
+    parser = argparse.ArgumentParser(
+        description='Loads a dataset and trains a DNN.')
+    parser.add_argument('-c', '--config', type=str, required=True,
+                        help='Config file.')
+
+    try:
+        args = parser.parse_args()
+    except argparse.ArgumentError:
+        sys.exit(1)
+
     np.set_printoptions(precision=4, suppress=True)
 
-    dataset_path = sys.argv[1]
+    with open(args.config) as config:
+        config = json.loads(config.read())
 
-    train_full, test = common.load_data(dataset_path, 0.2) # returns train and test sets
+        # Read config dictionaries
+        dataset = config['dataset']
+        architecture = config['architecture']
+        train = config['train']
+        working_dir = os.path.abspath(config.get('working_dir', filename))
 
-    model = rnn.build_simple_rnn()
-    # model = rnn.build_lstm()
-    # model = rnn.build_gru(n_hidden=5, n_neurons=184, learning_rate=0.00017240218306809038)
-    # model = dnn.build_model()
+        if not os.path.exists(working_dir):
+            os.mkdir(working_dir)
 
+        # Read dataset configuration
+        dataset_path = dataset['path']
+        test_ratio = dataset.get('test', 0.05)
+        legacy = dataset.get('legacy', False)
+        train_full, test = common.load_data(dataset_path,
+                                            test_ratio,
+                                            legacy=legacy) # returns train and test sets
 
-    model.summary()
+        # Read dataset configuration
+        meta = common.get_meta(architecture)
+        hidden = architecture['hidden']
+        neurons = architecture['neurons']
+        base = architecture.get('base', 2)
 
-    # early_stop = keras.callbacks.EarlyStopping(monitor='root_mean_squared_error', patience=10)
-    history = model.fit(train_full[0], train_full[1], epochs=2000, validation_split=.2,
-                        callbacks=[
-                                   # keras.callbacks.BackupAndRestore(backup_dir='/tmp/cuda_backup', save_freq=10),
-                                   keras.callbacks.TensorBoard('./logs/lstm', update_freq='epoch')
-                                   ])
+        # Build all types of models
+        models = {'dnn': dnn.build_model(meta, hidden, neurons),
+                  'avg': dnn.build_model_avg(meta, base, hidden, neurons),
+                  'concat': dnn.build_model_concat(meta, base, hidden, neurons),
+                  'rnn': rnn.build_simple_rnn(meta, hidden, neurons),
+                  'lstm': rnn.build_lstm(meta, hidden, neurons),
+                  'gru': rnn.build_gru(meta, hidden, neurons)}
 
-    mse_test = model.evaluate(*test)
+        # Choose a type and compile it
+        model = models[architecture['type']]
+        model = common.compile_model(model, params={'learning_rate': train['learning_rate']})
+        model.summary()
 
-    print('MSE test {}'.format(mse_test))
-    plot_loss(history)
+        logs = os.path.join(working_dir, train.get('logs', 'logs'))
 
-    if len(sys.argv) > 2:
-        working_dir = sys.argv[2]
-    else:
-        working_dir = os.path.dirname(os.path.realpath(__file__))
-    save_path = os.path.join(working_dir, 'hea_lstm.h5')
-    model.save(save_path)
+        # Train the model
+        history = model.fit(train_full[0], train_full[1],
+                            epochs=train['epochs'],
+                            validation_split=train.get('validation', .2),
+                            callbacks=[keras.callbacks.TensorBoard(logs, update_freq='epoch')])
+        # Evaluate the model
+        mse_test = model.evaluate(*test)
+        print('MSE test: {}'.format(mse_test))
+
+        # Save the model
+        save_path = os.path.join(working_dir, train['output'])
+        model.save(save_path)

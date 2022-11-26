@@ -1,0 +1,19 @@
+{
+    "dataset":{
+        "path": "/home/tzavellas/hea_ml_generated_files/datasets/error_dataset/error_dataset.csv",
+        "legacy": false,
+        "test": 0.05
+    },
+    "architecture": {
+        "type": "dnn",
+        "inputs": 6,
+        "outputs": 4,
+    },
+    "train": {
+        "epochs": 250,
+        "validation": 0.2,
+        "logs": "logs",
+        "output": "report.txt"
+    },
+    "working_dir": "regressor_error_dnn"
+}

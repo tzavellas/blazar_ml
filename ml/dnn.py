@@ -2,60 +2,73 @@
 from tensorflow import keras
 
 
-def base_dense(n_hidden=4, n_neurons=1000, input_shape=[6]):
-    input_ = keras.layers.Input(shape=input_shape)
-    hidden = input_
-    for layer in range(n_hidden):
+def base_dense(input_shape, output_shape, hidden_layer_sizes):
+    '''
+    Creates a model of a dense network, given a set of parameters.
+
+    Parameters
+    ----------
+    input_shape : list[int]
+        The input dimensions.
+    output_shape : list[int]
+        The output dimensions.
+    hidden_layer_sizes : list[int]
+        List of integers, representing the number of neurons, of each hidden layer.
+
+    Returns
+    -------
+    model : tf.keras.Model
+        The model.
+
+    '''
+    input_layer = keras.layers.Input(shape=input_shape)
+    hidden = input_layer
+    for n_neurons in hidden_layer_sizes:
         hidden = keras.layers.Dense(n_neurons, activation="relu")(hidden)
-    output = keras.layers.Dense(500)(hidden)
-    model = keras.Model(inputs=input_, outputs=output)
+    output_layer = keras.layers.Dense(output_shape)(hidden)
+    model = keras.Model(inputs=input_layer, outputs=output_layer)
     return model
 
 
-def build_model(n_hidden=4, n_neurons=1000, learning_rate=1e-3, input_shape=[6]):
-    model = base_dense(n_hidden, n_neurons, input_shape)
-    optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
-    model.compile(loss=keras.losses.MeanSquaredLogarithmicError(),
-                  metrics=[keras.metrics.MeanSquaredLogarithmicError(), keras.metrics.MeanSquaredError()],
-                  optimizer=optimizer)
+def build_model(meta={}, n_hidden=3, n_neurons=1000):
+    input_shape = meta.get('n_features_in_', [6])
+    output_shape = meta.get('n_outputs_expected_', 500)
+
+    hidden_layer_sizes = [n_neurons for i in range(n_hidden)]
+    model = base_dense(input_shape, output_shape, hidden_layer_sizes)
+
     return model
 
 
-def build_model_avg(n_base=2, n_hidden=5, n_neurons=634, learning_rate=0.0027031221642068, input_shape=[6]):
-    input_ = keras.layers.Input(shape=input_shape)
+def build_model_avg(meta={}, n_base=2, n_hidden=3, n_neurons=1000):
+    input_shape = meta.get('n_features_in_', [6])
+    output_shape= meta.get('n_outputs_expected_', 500)
 
-    base_out = base_dense(n_hidden, n_neurons, input_shape)
+    hidden_layer_sizes = [n_neurons for i in range(n_hidden)]
 
-    layers = [base_out(input_) for i in range(n_base)]
-
+    input_layer = keras.layers.Input(shape=input_shape)
+    base_out = base_dense(input_shape, output_shape, hidden_layer_sizes)
+    layers = [base_out(input_layer) for i in range(n_base)]
     avg = keras.layers.Average()(layers)
-    out = keras.layers.Dense(500)(avg)
+    output_layer = keras.layers.Dense(output_shape)(avg)
 
-    model = keras.Model(inputs=input_, outputs=out)
+    model = keras.Model(inputs=input_layer, outputs=output_layer)
 
-    optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
-
-    model.compile(loss=keras.losses.MeanSquaredLogarithmicError(),
-                  metrics=[keras.metrics.RootMeanSquaredError()],
-                  optimizer=optimizer)
     return model
 
 
-def build_model_concat(n_base=2, n_hidden=4, n_neurons=1000, learning_rate=1e-3, input_shape=[6]):
-    input_ = keras.layers.Input(shape=input_shape)
+def build_model_concat(meta={}, n_base=2, n_hidden=3, n_neurons=1000):
+    input_shape = meta.get('n_features_in_', [6])
+    output_shape= meta.get('n_outputs_expected_', 500)
 
-    base_out = base_dense(n_hidden, n_neurons, input_shape)
+    hidden_layer_sizes = [n_neurons for i in range(n_hidden)]
 
-    layers = [base_out(input_) for i in range(n_base)]
-
+    input_layer = keras.layers.Input(shape=input_shape)
+    base_out = base_dense(input_shape, output_shape, hidden_layer_sizes)
+    layers = [base_out(input_layer) for i in range(n_base)]
     merged = keras.layers.concatenate(layers)
-    out = keras.layers.Dense(500, activation='relu')(merged)
+    output_layer = keras.layers.Dense(output_shape, activation='relu')(merged)
 
-    model = keras.Model(inputs=input_, outputs=out)
+    model = keras.Model(inputs=input_layer, outputs=output_layer)
 
-    optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
-
-    model.compile(loss=keras.losses.MeanSquaredLogarithmicError(),
-                  metrics=[keras.metrics.RootMeanSquaredError()],
-                  optimizer=optimizer)
     return model

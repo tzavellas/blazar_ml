@@ -1,0 +1,23 @@
+{
+    "dataset":{
+        "path": "/home/tzavellas/hea_ml_generated_files/datasets/dataset_10k/normalized.csv",
+        "legacy": true,
+        "test": 0.05
+    },
+    "architecture": {
+        "type": "concat",
+        "inputs": 6,
+        "outputs": 500,
+        "base": 2,
+        "hidden": 4,
+        "neurons": 1000
+    },
+    "train": {
+        "epochs": 1000,
+        "validation": 0.2,
+        "learning_rate": 0.0019592805067928207,
+        "logs": "logs",
+        "output": "hea_dnn_concat.h5"
+    },
+    "working_dir": "dnn_concat"
+}

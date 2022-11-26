@@ -6,56 +6,8 @@ import numpy as np
 import os
 import sys
 from tensorflow import keras
-from scipy.stats import ks_2samp
-# from scipy.integrate import simpson
 # from sklearn import metrics
 # from dtaidistance import dtw
-
-
-# def integral_error(y1, y2):
-#     """
-#     Wrapper function. Measures the integral under two curves and returns their
-#     absolute difference.
-
-#     Parameters
-#     ----------
-#     y1 : nd.array
-#         Samples of the value of the first curve.
-#     y2 : nd.array
-#         Samples of the value of the second curve.
-
-#     Returns
-#     -------
-#     np.float64
-#         The square root of the absolute difference of the areas.
-
-#     """
-#     area1 = simpson(y1)
-#     area2 = simpson(y2)
-#     return np.sqrt(np.abs(area1 - area2))
-
-
-def kolmogorov_smirnov_error(y1, y2):
-    """
-    Wrapper function. Performs a two-sample Kolmogorov-Smirnov test and returns
-    the KS statistic as error.
-
-    Parameters
-    ----------
-    y1 : nd.array
-        Sample observations from the first continuous distribution.
-    y2 : nd.array
-        Sample observations from the second continuous distribution.
-
-    Returns
-    -------
-    stat : np.float64
-        The error between the two distributions.
-
-    """
-    stat, p_value = ks_2samp(y1, y2)
-    return stat
-
 
 
 def mean_error_ranking(error, model_ids):
@@ -82,23 +34,6 @@ def mean_error_ranking(error, model_ids):
     ss = np.std(error, axis=1)
     argsort = np.argsort(mm)    
     return m_id[argsort].tolist(), list(zip(mm,ss))
-
-
-def calculate_predictions(models, shape):
-    prediction = np.zeros((len(models), ) + train_set[1].shape) # preallocate
-    for i, model in enumerate(models):
-        prediction[i] = model.predict(train_set[0])    # index 0 means the case parameters
-        
-    return prediction
-    
-
-def calculate_error(y, y_pred, err_func):
-    error_metric = np.zeros((len(y_pred), len(y)))
-    for i, y_i in enumerate(y):
-        for j, y_j in enumerate(y_pred):
-            error_metric[j][i] = err_func(y_i, y_j[i])
-
-    return error_metric
 
 
 def mean_ranking(error, model_ids):
@@ -130,10 +65,6 @@ def mean_ranking(error, model_ids):
     argsort = np.argsort(mean)
     m_id[argsort].tolist()
     return m_id[argsort].tolist(), mean, rankings
-    
-
-def de_normalize(data, min_val=-30, max_val=0):
-    return min_val + (max_val - min_val) * data
 
 
 def plot_grouped_barchart(rankings, model_ids, out_dir):
@@ -184,8 +115,8 @@ def plot_matrix(data, name, labels, out_dir, symbols='ox+|_', scale='linear'):
 
     
 def plot_all_cases(y, prediction, labels, out_dir, symbols='ox+|_'):
-    y_pred = de_normalize(prediction)
-    y_d = de_normalize(y)    # index 1 means the spectrum values
+    y_pred = common.de_normalize(prediction)
+    y_d = common.de_normalize(y)    # index 1 means the spectrum values
     for i, y_i in enumerate(y_d):
         fig = plt.figure(i)
         plot(y_i, symbols[0], 'actual')
@@ -223,7 +154,7 @@ if __name__ == "__main__":
     plot_rankings = args.rankings
     plot_all = args.all
 
-    train_set, test_set = common.load_data(dataset, 0) # returns train and test sets
+    train_set, _ = common.load_data(dataset, 0) # test_set is empty because ratio is 0
 
     if not os.path.exists(working_dir):
         os.mkdir(working_dir)
@@ -233,14 +164,12 @@ if __name__ == "__main__":
     
     models = [keras.models.load_model(m) for m in model_files]
 
-    prediction = calculate_predictions(models, train_set[1].shape)
+    prediction = common.calculate_predictions(models, train_set)
 
-    error_metric = calculate_error(train_set[1], prediction,
-                                   kolmogorov_smirnov_error
-                                   # dtw.distance
-                                   # integral_error
-                                   # metrics.mean_squared_error
-                                   )
+    error_metric = common.calculate_error(train_set[1],
+                                          prediction,
+                                          common.kolmogorov_smirnov_error)
+    # alternative error functions: dtw.distance, common.integral_error, metrics.mean_squared_error
     
     rank_of_mean, stats = mean_error_ranking(error_metric, model_files)
     

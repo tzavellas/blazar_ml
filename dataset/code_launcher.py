@@ -234,6 +234,29 @@ class CodeLauncher:
         '''
         return self._inputs_dataframe
 
+    def load_inputs_dataframe(self, file=None):
+        '''
+        Load inputs dataframe
+
+        Parameters
+        ----------
+        file : str
+            Inputs file path.
+
+        Returns
+        -------
+        bool
+            True if file exists and load was successful.
+
+        '''
+        logger = logging.getLogger(__name__)
+        if file is None:
+            file = os.path.join(self._working_dir, self._EXTENDED_CSV)
+        if os.path.exists(file):
+            self._inputs_dataframe = pd.read_csv(file)
+            logger.info('Inputs dataframe {}'.format(file))
+            return True
+
     def set_exec_path(self, exec_path):
         '''
         Setter for the executable path.
@@ -277,10 +300,7 @@ class CodeLauncher:
         if not os.path.isabs(input):
             input = os.path.join(self.working_dir, input)
 
-        if os.path.exists(input):
-            self._inputs_dataframe = pd.read_csv(input)
-            logger.info('Inputs dataframe {}'.format(input))
-
+        if self.load_inputs_dataframe(input):
             # add two extra columns
             self._inputs_dataframe.insert(1, self.SUCCESS_KEY, "False")
             self._inputs_dataframe.insert(2, self.ELAPSED_TIME_KEY, 0.0)

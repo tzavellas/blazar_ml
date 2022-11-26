@@ -40,6 +40,8 @@ if __name__ == "__main__":
                         help='Aggregate plot of all spectra in a file "spectra.png". Default is True.')
     parser.add_argument('-x', '--extra-args', default=[], nargs='*',
                         help='List of extra arguments to pass to the program. Default is [].')
+    parser.add_argument('-s', '--skip', action='store_true',
+                        help=argparse.SUPPRESS)
 
     try:
         args = parser.parse_args()
@@ -86,36 +88,40 @@ if __name__ == "__main__":
     rows = launcher.get_inputs_dataframe().shape[0]
     logger.info('Input csv contains {} rows'.format(rows))
 
-    params = []
-    for row in range(rows):
-        params.append((row, args.extra_args, args.format))
+    if not args.skip:
+        params = []
+        for row in range(rows):
+            params.append((row, args.extra_args, args.format))
+        # start measuring time
+        start_time = datetime.now()
+        # run in parallel processes
+        with Pool(processes=args.num_proc) as pool:
+            try:
+                ret = pool.starmap(launcher.run, iterable=params)
+            except Exception as e:
+                logger.error('starmap: {}'.format(e))
+                sys.exit(1)
+        # stop measuring time
+        end_time = datetime.now()
+        # logs total runtime duration
+        logger.info('Total duration: {}'.format(end_time - start_time))
 
-    # start measuring time
-    start_time = datetime.now()
+        inputs_dataframe = launcher.get_inputs_dataframe()
+        for run_id, success, elapsed, elapsed_base in ret:
+            inputs_dataframe.at[run_id, CodeLauncher.SUCCESS_KEY] = success
+            inputs_dataframe.at[run_id, CodeLauncher.ELAPSED_TIME_KEY] = '{:.0f}'.format(
+                elapsed)
+            inputs_dataframe.at[run_id, CodeLauncher.ELAPSED_TIME_BASELINE_KEY] = '{:.0f}'.format(
+                elapsed_base)
+        # Write the dataframe to the output directory
+        launcher.write_dataframe(inputs_dataframe, args.working_dir)
 
-    # run in parallel processes
-    with Pool(processes=args.num_proc) as pool:
-        try:
-            ret = pool.starmap(launcher.run, iterable=params)
-        except Exception as e:
-            logger.error('starmap: {}'.format(e))
-            sys.exit(1)
+    elif launcher.load_inputs_dataframe():
+        inputs_dataframe = launcher.get_inputs_dataframe()
+    else:
+        logger.error('Unable to load {}. Cannot continue'.format(args.input))
+        sys.exit(1)
 
-    # stop measuring time
-    end_time = datetime.now()
-
-    # logs total runtime duration
-    logger.info('Total duration: {}'.format(end_time - start_time))
-
-    inputs_dataframe = launcher.get_inputs_dataframe()
-    for run_id, success, elapsed, elapsed_base in ret:
-        inputs_dataframe.at[run_id, CodeLauncher.SUCCESS_KEY] = success
-        inputs_dataframe.at[run_id, CodeLauncher.ELAPSED_TIME_KEY] = '{:.0f}'.format(
-            elapsed)
-        inputs_dataframe.at[run_id, CodeLauncher.ELAPSED_TIME_BASELINE_KEY] = '{:.0f}'.format(
-            elapsed_base)
-    # Write the dataframe to the output directory
-    launcher.write_dataframe(inputs_dataframe, args.working_dir)
 
     if args.plot_spectra:
         spectra = 'spectra.{}'.format(args.format)
@@ -137,23 +143,22 @@ if __name__ == "__main__":
     interpolated = pd.DataFrame(out_dict)
     interpolated.to_csv(interpolated_file, index=False, na_rep='NaN')
 
-    normalized = pd.DataFrame()
     skipped = []
-
+    normalized = np.zeros((interpolated.shape[1] - 1, interpolated.shape[0] + 6 + 1))
     for index, row in inputs_dataframe.iterrows():
         s = 'y_{}'.format(index)
         x = row['radius':'slelints']
         if row['success']:
             y = interpolated.loc[:, s]
             y_n = normalize(y)
-            y_n = y_n.append(pd.Series([np.amax(y_n)]))
-            z = x.append(y_n)
-            normalized = normalized.append(z, ignore_index=True)
+            y_n = pd.concat([y_n, pd.Series([np.amax(y_n)])], ignore_index=True)
+            z = pd.concat([x, y_n], ignore_index=True)
+            normalized[index, :] = z.values
         else:
-            normalized = normalized.append(pd.Series(dtype='float64'), ignore_index=True)
+            normalized[index, :] = np.ones(normalized.shape[1]) * np.nan
             skipped.append(s)
 
-
+    normalized = pd.DataFrame(normalized)
     logger.info('Skipped: {}'.format(skipped))
 
     normalized_file = 'normalized.csv'
