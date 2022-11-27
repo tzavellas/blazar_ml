@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 import argparse
 import common
+from dtaidistance import dtw
+import json
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 import sys
+from sklearn import metrics
 from tensorflow import keras
-# from sklearn import metrics
-# from dtaidistance import dtw
 
 
 def mean_error_ranking(error, model_ids):
@@ -68,6 +69,23 @@ def mean_ranking(error, model_ids):
 
 
 def plot_grouped_barchart(rankings, model_ids, out_dir):
+    '''
+    Plots a grouped barchart of the rankings
+
+    Parameters
+    ----------
+    rankings : ndarray
+        An array of the rankings [num_models x num_cases].
+    model_ids : list
+        List of model ids.
+    out_dir : str
+        Path to save the plot.
+
+    Returns
+    -------
+    None.
+
+    '''
     n = rankings.shape[0]
     counts = np.zeros((n, n))
     for i, rank in enumerate(rankings):
@@ -96,12 +114,52 @@ def plot_grouped_barchart(rankings, model_ids, out_dir):
     
 
 def plot(y, mark, lab):
+    '''
+    Plots y-values.
+
+    Parameters
+    ----------
+    y : ndarray
+        y-values.
+    mark : char
+        Marker symbol.
+    lab : str
+        Plot series label.
+
+    Returns
+    -------
+    None.
+
+    '''
     plt.plot(y, marker=mark, label=lab, markersize=2, linestyle='')
     plt.ylim(-30, 0)
     # plt.xlim(300, 450)
 
 
 def plot_matrix(data, name, labels, out_dir, symbols='ox+|_', scale='linear'):
+    '''
+    Plots a 2d array as separate plot series.
+
+    Parameters
+    ----------
+    data : ndarray
+        The 2d array [num_series x num_values].
+    name : str
+        Y-axis label.
+    labels : list(str)
+        Labels for each series.
+    out_dir : str
+        Path to save the plot.
+    symbols : str, optional
+        String of symbols to use as markers. The default is 'ox+|_'.
+    scale : str, optional
+        Y-axis scale. The default is 'linear'.
+
+    Returns
+    -------
+    None.
+
+    '''
     fig = plt.figure()
     for i, y in enumerate(data):
         plt.plot(y, marker=symbols[i], linestyle='',  label=labels[i])
@@ -113,8 +171,67 @@ def plot_matrix(data, name, labels, out_dir, symbols='ox+|_', scale='linear'):
     plt.savefig(fig_path, format='svg')
     plt.close(fig)
 
-    
+
+def plot_cases(y, prediction, labels, out_dir, cases, symbols='ox+|_'):
+    '''
+    Plots specific cases. Actual spectrum and prediction
+
+    Parameters
+    ----------
+    y : ndarray
+        Actual spectrum.
+    prediction : ndarray
+        Prediction spectra [num_models x num_cases].
+    labels : list(str)
+        Labels for each series.
+    out_dir : str
+        Path to save the plot.
+    cases : list(int)
+        List of indices of cases to plot.
+    symbols : str, optional
+        String of symbols to use as markers. The default is 'ox+|_'.
+
+    Returns
+    -------
+    None.
+
+    '''
+    y_pred = common.de_normalize(prediction)
+    y_d = common.de_normalize(y)    # index 1 means the spectrum values
+    for i in cases:
+        y_i = y_d[i]
+        fig = plt.figure(i)
+        plot(y_i, symbols[0], 'actual')
+        for j, y_p in enumerate(y_pred):
+            plot(y_p[i], symbols[j + 1], labels[j])
+        plt.legend()
+        fig_path = os.path.join(out_dir, '{}.svg'.format(i))
+        plt.savefig(fig_path, format='svg')
+        plt.close(fig)
+
+
 def plot_all_cases(y, prediction, labels, out_dir, symbols='ox+|_'):
+    '''
+    Plots all cases. Actual spectrum and prediction
+
+    Parameters
+    ----------
+    y : ndarray
+        Actual spectrum.
+    prediction : ndarray
+        Prediction spectra [num_models x num_cases].
+    labels : list(str)
+        Labels for each series.
+    out_dir : str
+        Path to save the plot.
+    symbols : str, optional
+        String of symbols to use as markers. The default is 'ox+|_'.
+
+    Returns
+    -------
+    None.
+
+    '''
     y_pred = common.de_normalize(prediction)
     y_d = common.de_normalize(y)    # index 1 means the spectrum values
     for i, y_i in enumerate(y_d):
@@ -131,55 +248,54 @@ def plot_all_cases(y, prediction, labels, out_dir, symbols='ox+|_'):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Loads a dataset and plots actual and predicted curves of each test case.')
-    parser.add_argument('-w', '--working-dir', default='plots', type=str,
-                        help='Root path where the individual plots will be saved. Default is "plots".')
-    parser.add_argument('-d', '--dataset', type=str,
-                        help='The path of the dataset.')
-    parser.add_argument('-m', '--models', type=str, default='models.txt',
-                        help='File containing the list of h5 models to plot. Default is models.txt.')
-    parser.add_argument('-a', '--all', action='store_true',
-                        help='Plots the prediction along with the actual spectrum.')
-    parser.add_argument('-r', '--rankings', type=bool, default=True,
-                        help='Plots a grouped barchart of the rankings. Default is False.')
+    parser.add_argument('-c', '--config', type=str, required=True,
+                        help='Config file.')
 
     try:
         args = parser.parse_args()
-    except argparse.ArgumentError as arg_e:
-        print('parse_args: {}'.format(arg_e), file=sys.stderr)
+    except argparse.ArgumentError:
         sys.exit(1)
 
-    dataset = args.dataset
-    working_dir = os.path.abspath(args.working_dir)
-    models = args.models
-    plot_rankings = args.rankings
-    plot_all = args.all
+    with open(args.config) as config:
+        config = json.loads(config.read())
 
-    train_set, _ = common.load_data(dataset, 0) # test_set is empty because ratio is 0
-
-    if not os.path.exists(working_dir):
-        os.mkdir(working_dir)
-
-    with open(models) as f:
-        model_files = [line.rstrip('\n') for line in f]
-    
-    models = [keras.models.load_model(m) for m in model_files]
-
-    prediction = common.calculate_predictions(models, train_set)
-
-    error_metric = common.calculate_error(train_set[1],
-                                          prediction,
-                                          common.kolmogorov_smirnov_error)
-    # alternative error functions: dtw.distance, common.integral_error, metrics.mean_squared_error
-    
-    rank_of_mean, stats = mean_error_ranking(error_metric, model_files)
-    
-    mean_rank, mean_val, rankings = mean_ranking(error_metric, model_files)
+        dataset = config['dataset']
+        working_dir = os.path.abspath(config['working_dir'])
         
-    plot_matrix(error_metric, 'error', model_files, working_dir, scale='log')
+        if not os.path.exists(working_dir):
+            os.mkdir(working_dir)
 
-    if plot_all == True:
-        plot_all_cases(train_set[1], prediction, model_files, working_dir)
+        train_set, _ = common.load_data(dataset['path'], 0, sample=False) # test_set is empty because ratio is 0
 
-    if plot_rankings == True:
-        plot_grouped_barchart(rankings, model_files, working_dir)
-        # plot_matrix(rankings, 'ranking', model_files, working_dir)
+        model_files = [os.path.basename(file) for file in config['models']]
+        models = [keras.models.load_model(m) for m in config['models']]
+
+        plot_rankings = config.get('plot_rankings', True)
+        plot_all = config.get('plot_all', False)
+        cases = config.get('plot_cases', [])
+
+        prediction = common.calculate_predictions(models, train_set)
+
+        metrics = {"dtw": dtw.distance,
+                   "integral": common.integral_error,
+                   "kolmogorov_smirnov": common.kolmogorov_smirnov_error,
+                   "mse": metrics.mean_squared_error}
+        
+        choice = metrics[config.get('metric', 'kolmogorov_smirnov')]
+
+        error_metric = common.calculate_error(train_set[1], prediction, choice)
+
+        rank_of_mean, stats = mean_error_ranking(error_metric, model_files)
+
+        mean_rank, mean_val, rankings = mean_ranking(error_metric, model_files)
+
+        plot_matrix(error_metric, 'error', model_files, working_dir, scale='log')
+
+        if plot_all == True:
+            plot_all_cases(train_set[1], prediction, model_files, working_dir)
+        elif cases:
+            plot_cases(train_set[1], prediction, model_files, working_dir, cases)
+
+        if plot_rankings == True:
+            plot_grouped_barchart(rankings, model_files, working_dir)
+            # plot_matrix(rankings, 'ranking', model_files, working_dir)

@@ -174,7 +174,7 @@ def kolmogorov_smirnov_error(y1, y2):
     return stat
 
 
-def load_data(path, test_ratio=0.2, random_state=42, drop_na=True, legacy=True):
+def load_data(path, test_ratio=0.2, random_state=42, drop_na=True, legacy=True, sample=True):
     '''
     Loads a dataset in csv format and returns a training set and a test set
 
@@ -190,6 +190,8 @@ def load_data(path, test_ratio=0.2, random_state=42, drop_na=True, legacy=True):
         Removes lines that contain NaN values. The default is True.
     legacy : bool, optional
         Ignores the last two columns. The default is True.
+    sampe : bool, optional
+        Reorders the dataset. The default is True.
 
     Returns
     -------
@@ -203,8 +205,17 @@ def load_data(path, test_ratio=0.2, random_state=42, drop_na=True, legacy=True):
     else:
         dataset = raw_dataset
 
-    train_set = dataset.sample(frac=1-test_ratio, random_state=random_state)
-    test_set = dataset.drop(train_set.index)
+    if sample:
+        train_set = dataset.sample(frac=1-test_ratio, random_state=random_state)
+        test_set = dataset.drop(train_set.index)
+    else:
+        if test_ratio == 0:
+            train_set = dataset
+            test_set = pd.DataFrame()
+        else:
+            split_row = int(dataset.shape[0] * (1 - test_ratio))
+            train_set = dataset[:split_row, :]
+            test_set = dataset[split_row:, :]
 
     n_features = 6
     if legacy:
