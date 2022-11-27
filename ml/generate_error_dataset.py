@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import common
+import json
 import numpy as np
 import os
 import pandas as pd
@@ -8,40 +9,38 @@ import sys
 from tensorflow import keras
 
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Loads a dataset and plots actual and predicted curves of each test case.')
-    parser.add_argument('-w', '--working-dir', default='plots', type=str,
-                        help='Root path where the individual plots will be saved. Default is "plots".')
-    parser.add_argument('-d', '--dataset', type=str,
-                        help='The path of the dataset.')
-    parser.add_argument('-m', '--models', type=str, default='models.txt',
-                        help='File containing the list of h5 models to plot. Default is models.txt.')
+    parser.add_argument('-c', '--config', type=str, required=True,
+                        help='Config file.')
 
     try:
         args = parser.parse_args()
-    except argparse.ArgumentError as arg_e:
-        print('parse_args: {}'.format(arg_e), file=sys.stderr)
+    except argparse.ArgumentError:
         sys.exit(1)
 
-    dataset = args.dataset
-    working_dir = os.path.abspath(args.working_dir)
-    models = args.models
+    with open(args.config) as config:
+        config = json.loads(config.read())
 
-    train_set, _ = common.load_data(dataset, 0) # test_set is empty because ratio is 0
+        dataset = config['dataset']
+        working_dir = os.path.abspath(config['working_dir'])
 
-    with open(args.models) as f:
-        model_files = [line.rstrip('\n') for line in f]
-        models = [keras.models.load_model(m) for m in model_files]
+        if not os.path.exists(working_dir):
+            os.mkdir(working_dir)
     
-    predictions = common.calculate_predictions(models, train_set)
+        train_set, _ = common.load_data(dataset['path'], dataset.get('test', 0)) # test_set is empty because ratio is 0
     
-    error_metric = common.calculate_error(train_set[1],
-                                          predictions,
-                                          common.kolmogorov_smirnov_error).T
-    
-    error_dataset = np.concatenate((train_set[0], error_metric), axis=1)
-    df = pd.DataFrame(error_dataset)
-    
-    df.to_csv(os.path.join(working_dir, 'error_dataset.csv'), header=False, index=True)
+        model_files = [os.path.basename(file) for file in config['models']]
+        models = [keras.models.load_model(m) for m in config['models']]
+
+        predictions = common.calculate_predictions(models, train_set)
+
+        error_metric = common.calculate_error(train_set[1],
+                                              predictions,
+                                              common.kolmogorov_smirnov_error).T
+
+        error_dataset = np.concatenate((train_set[0], error_metric), axis=1)
+        df = pd.DataFrame(error_dataset)
+
+        df.to_csv(os.path.join(working_dir, config['output']), header=False, index=True)

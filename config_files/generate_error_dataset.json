@@ -1,0 +1,13 @@
+{
+    "dataset":{
+        "path": "/home/tzavellas/hea_ml_generated_files/datasets/dataset_5k/normalized.csv",
+        "test": 0
+    },
+    "models": [ "/home/tzavellas/hea_ml_generated_files/tf2_models/hea_dnn.h5",
+                "/home/tzavellas/hea_ml_generated_files/tf2_models/hea_rnn.h5",
+                "/home/tzavellas/hea_ml_generated_files/tf2_models/hea_gru.h5",
+                "/home/tzavellas/hea_ml_generated_files/tf2_models/hea_lstm.h5"
+              ],
+    "output": "error_dataset2.csv",
+    "working_dir": "/home/tzavellas/hea_ml_generated_files/datasets/error_dataset"
+}
