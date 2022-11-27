@@ -113,7 +113,7 @@ def plot_grouped_barchart(rankings, model_ids, out_dir):
     plt.close(fig)
     
 
-def plot(y, mark, lab):
+def plot(y, mark, lab, dy=None):
     '''
     Plots y-values.
 
@@ -125,13 +125,21 @@ def plot(y, mark, lab):
         Marker symbol.
     lab : str
         Plot series label.
+    dy : float
+        y-values error.
 
     Returns
     -------
     None.
 
     '''
-    plt.plot(y, marker=mark, label=lab, markersize=2, linestyle='')
+    if dy is not None:
+        marker = '.'
+        x = np.indices(y.shape)[0]
+        plt.fill_between(x, y - dy, y + dy, color='gray', alpha=0.4)
+    else:
+        marker = mark
+        plt.plot(y, marker=marker, label=lab, markersize=2, linestyle='')
     plt.ylim(-30, 0)
     # plt.xlim(300, 450)
 
@@ -172,7 +180,7 @@ def plot_matrix(data, name, labels, out_dir, symbols='ox+|_', scale='linear'):
     plt.close(fig)
 
 
-def plot_cases(y, prediction, labels, out_dir, cases, symbols='ox+|_'):
+def plot_cases(y, err_pred, prediction, labels, out_dir, cases, symbols='ox+|_'):
     '''
     Plots specific cases. Actual spectrum and prediction
 
@@ -180,6 +188,8 @@ def plot_cases(y, prediction, labels, out_dir, cases, symbols='ox+|_'):
     ----------
     y : ndarray
         Actual spectrum.
+    err_pred : ndarray
+        Error predictions.
     prediction : ndarray
         Prediction spectra [num_models x num_cases].
     labels : list(str)
@@ -203,14 +213,17 @@ def plot_cases(y, prediction, labels, out_dir, cases, symbols='ox+|_'):
         fig = plt.figure(i)
         plot(y_i, symbols[0], 'actual')
         for j, y_p in enumerate(y_pred):
-            plot(y_p[i], symbols[j + 1], labels[j])
+            if err_pred is None:
+                plot(y_p[i], symbols[j + 1], labels[j])
+            else:
+                plot(y_p[i], symbols[j + 1], labels[j], err_pred[i, j])
         plt.legend()
         fig_path = os.path.join(out_dir, '{}.svg'.format(i))
         plt.savefig(fig_path, format='svg')
         plt.close(fig)
 
 
-def plot_all_cases(y, prediction, labels, out_dir, symbols='ox+|_'):
+def plot_all_cases(y, err_pred, prediction, labels, out_dir, symbols='ox+|_'):
     '''
     Plots all cases. Actual spectrum and prediction
 
@@ -218,6 +231,8 @@ def plot_all_cases(y, prediction, labels, out_dir, symbols='ox+|_'):
     ----------
     y : ndarray
         Actual spectrum.
+    err_pred : ndarray
+        Error predictions.
     prediction : ndarray
         Prediction spectra [num_models x num_cases].
     labels : list(str)
@@ -238,7 +253,10 @@ def plot_all_cases(y, prediction, labels, out_dir, symbols='ox+|_'):
         fig = plt.figure(i)
         plot(y_i, symbols[0], 'actual')
         for j, y_p in enumerate(y_pred):
-            plot(y_p[i], symbols[j + 1], labels[j])
+            if err_pred is None:
+                plot(y_p[i], symbols[j + 1], labels[j])
+            else:
+                plot(y_p[i], symbols[j + 1], labels[j], err_pred[i, j])
         plt.legend()
         fig_path = os.path.join(out_dir, '{}.svg'.format(i))
         plt.savefig(fig_path, format='svg')
@@ -261,20 +279,25 @@ if __name__ == "__main__":
 
         dataset = config['dataset']
         working_dir = os.path.abspath(config['working_dir'])
+        plot_options = config['plot_options']
         
         if not os.path.exists(working_dir):
             os.mkdir(working_dir)
 
-        train_set, _ = common.load_data(dataset['path'], 0, sample=False) # test_set is empty because ratio is 0
+        input_set, _ = common.load_data(dataset['path'], 0, sample=False) # test_set is empty because ratio is 0
 
         model_files = [os.path.basename(file) for file in config['models']]
         models = [keras.models.load_model(m) for m in config['models']]
+        if plot_options.get('error', False):
+            error_model = keras.models.load_model(config['error_model'])
+        else:
+            error_model = None
 
-        plot_rankings = config.get('plot_rankings', True)
-        plot_all = config.get('plot_all', False)
-        cases = config.get('plot_cases', [])
+        plot_rankings = plot_options.get('rankings', True)
+        plot_all = plot_options.get('all', False)
+        cases = plot_options.get('cases', [])
 
-        prediction = common.calculate_predictions(models, train_set)
+        prediction = common.calculate_predictions(models, input_set)
 
         metrics = {"dtw": dtw.distance,
                    "integral": common.integral_error,
@@ -283,7 +306,7 @@ if __name__ == "__main__":
         
         choice = metrics[config.get('metric', 'kolmogorov_smirnov')]
 
-        error_metric = common.calculate_error(train_set[1], prediction, choice)
+        error_metric = common.calculate_error(input_set[1], prediction, choice)
 
         rank_of_mean, stats = mean_error_ranking(error_metric, model_files)
 
@@ -292,9 +315,17 @@ if __name__ == "__main__":
         plot_matrix(error_metric, 'error', model_files, working_dir, scale='log')
 
         if plot_all == True:
-            plot_all_cases(train_set[1], prediction, model_files, working_dir)
+            if error_model is not None:
+                err_pred = error_model.predict(input_set[0])
+            else:
+                err_pred = None
+            plot_all_cases(input_set[1], err_pred, prediction, model_files, working_dir)
         elif cases:
-            plot_cases(train_set[1], prediction, model_files, working_dir, cases)
+            if error_model is not None:
+                err_pred = error_model.predict(input_set[0])
+            else:
+                err_pred = None
+            plot_cases(input_set[1], err_pred, prediction, model_files, working_dir, cases)
 
         if plot_rankings == True:
             plot_grouped_barchart(rankings, model_files, working_dir)

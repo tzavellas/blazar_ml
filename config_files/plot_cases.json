@@ -1,0 +1,16 @@
+{
+    "dataset":{
+        "path": "/home/tzavellas/hea_ml_generated_files/datasets/dataset_100/normalized.csv"
+    },
+    "error_model": "/home/tzavellas/hea_ml_generated_files/tf2_models/hea_error_dnn.h5",
+    "metric": "kolmogorov_smirnov",
+    "models": [ "/home/tzavellas/hea_ml_generated_files/tf2_models/hea_gru.h5"
+              ],
+    "plot_options":{
+        "all": false,
+        "cases": [0, 10, 20],
+        "error": true,
+        "rankings": false
+    },
+    "working_dir": "/home/tzavellas/hea_ml_generated_files/datasets/plot_cases"
+}
