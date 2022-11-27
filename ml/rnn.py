@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
+import numpy as np
 import tensorflow as tf
 from tensorflow import keras
+from scikeras.wrappers import KerasRegressor
+from scipy.stats import reciprocal
+from sklearn.model_selection import RandomizedSearchCV
 
 
 def build_simple_rnn(meta={}, n_hidden=3, n_neurons=100):
@@ -43,3 +47,60 @@ def build_gru(meta={}, n_hidden=3, n_neurons=100):
     model.add(keras.layers.Dense(output_shape))
 
     return model
+
+
+def regress_simple_rnn(output_shape):
+    keras_reg = KerasRegressor(model=build_simple_rnn,
+                               model__meta={'n_outputs_expected_': output_shape},
+                               optimizer=keras.optimizers.Adam,
+                               loss=keras.losses.MeanSquaredLogarithmicError,
+                               metrics=[keras.metrics.MeanSquaredLogarithmicError,
+                                        keras.metrics.MeanSquaredError])
+
+    param_distribs = {
+        "model__n_hidden": [2, 3, 4, 5],
+        "model__n_neurons": np.arange(10, 2000),
+        "optimizer__learning_rate": reciprocal(1e-5, 1e-2),
+    }
+
+    rnd_search_cv = RandomizedSearchCV(keras_reg, param_distribs, n_iter=20, cv=3)
+
+    return rnd_search_cv
+
+
+def regress_lstm(output_shape):
+    keras_reg = KerasRegressor(model=build_lstm,
+                               model__meta={'n_outputs_expected_': output_shape},
+                               optimizer=keras.optimizers.Adam,
+                               loss=keras.losses.MeanSquaredLogarithmicError,
+                               metrics=[keras.metrics.MeanSquaredLogarithmicError,
+                                        keras.metrics.MeanSquaredError])
+
+    param_distribs = {
+        "model__n_hidden": [2, 3, 4, 5],
+        "model__n_neurons": np.arange(10, 2000),
+        "optimizer__learning_rate": reciprocal(1e-5, 1e-2),
+    }
+
+    rnd_search_cv = RandomizedSearchCV(keras_reg, param_distribs, n_iter=20, cv=3)
+
+    return rnd_search_cv
+
+
+def regress_gru(output_shape):
+    keras_reg = KerasRegressor(model=build_gru,
+                               model__meta={'n_outputs_expected_': output_shape},
+                               optimizer=keras.optimizers.Adam,
+                               loss=keras.losses.MeanSquaredLogarithmicError,
+                               metrics=[keras.metrics.MeanSquaredLogarithmicError,
+                                        keras.metrics.MeanSquaredError])
+
+    param_distribs = {
+        "model__n_hidden": [2, 3, 4, 5],
+        "model__n_neurons": np.arange(10, 2000),
+        "optimizer__learning_rate": reciprocal(1e-5, 1e-2),
+    }
+
+    rnd_search_cv = RandomizedSearchCV(keras_reg, param_distribs, n_iter=20, cv=3)
+
+    return rnd_search_cv

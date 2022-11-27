@@ -1,13 +1,13 @@
 {
     "dataset":{
-        "path": "/home/tzavellas/hea_ml_generated_files/datasets/error_dataset/error_dataset.csv",
-        "legacy": false,
+        "path": "/home/tzavellas/hea_ml_generated_files/datasets/dataset_10k/normalized.csv",
+        "legacy": true,
         "test": 0.05
     },
     "architecture": {
-        "type": "concat",
+        "type": "lstm",
         "inputs": 6,
-        "outputs": 4,
+        "outputs": 500,
     },
     "train": {
         "epochs": 250,
@@ -15,5 +15,5 @@
         "logs": "logs",
         "output": "report.txt"
     },
-    "working_dir": "regressor_error_dnn_concat"
+    "working_dir": "regress_lstm"
 }

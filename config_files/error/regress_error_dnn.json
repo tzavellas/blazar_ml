@@ -5,7 +5,7 @@
         "test": 0.05
     },
     "architecture": {
-        "type": "avg",
+        "type": "dnn",
         "inputs": 6,
         "outputs": 4,
     },
@@ -15,5 +15,5 @@
         "logs": "logs",
         "output": "report.txt"
     },
-    "working_dir": "regressor_error_dnn_avg"
+    "working_dir": "regress_error_dnn"
 }
