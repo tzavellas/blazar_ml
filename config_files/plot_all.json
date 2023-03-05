@@ -10,7 +10,7 @@
                 "/home/tzavellas/hea_ml_generated_files/tf2_models/hea_lstm.h5"
               ],
     "plot_options":{
-        "all": true,
+        "all": false,
         "cases": [0, 10, 20],
         "error": false,
         "rankings": true

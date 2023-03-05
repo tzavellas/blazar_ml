@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from astropy import constants as const
 import numpy as np
 import pandas as pd
 from scipy.integrate import simpson
@@ -232,6 +233,37 @@ def load_data(path, test_ratio=0.2, random_state=42, drop_na=True, legacy=True, 
         y_test = test_set.iloc[:, n_features:].to_numpy()
 
     return (x_train, y_train), (x_test, y_test)
+
+
+def log_gamma_range(gamma, radius, bfield, 
+                    base=10, 
+                    q=const.e.esu.value,
+                    m=const.m_e.cgs.value, 
+                    c=const.c.cgs.value):
+    '''
+    Function that calculates the range of the geext values given a gamma value
+    
+    Parameters
+    ----------
+            gamma (float):          Reference logarithm gamma
+            radius (float):         Reference logarithm radius
+            bfield (float):         Reference logarithm bfield
+            base (float):           The logarithm base, default value is 10
+            q (float):              The electric charge, default value in cgs
+            m (float):              The mass of the charge. default value in cgs
+            c (float):              The speed of light, default value in cgs
+    Returns
+    -------
+    Tuple
+        The gamma geextmx range
+    '''
+    v_min = 2 + gamma
+    logc = np.log(q / (m*c**2)) / np.log(base)
+    v_max = radius + bfield + logc
+    # set a hard upper limit based on code performance
+    v_max = min(v_max, 8.)
+
+    return v_min, v_max
 
 
 def split_valid(x_train_full, y_train_full, ratio=0.2):
