@@ -1,22 +1,23 @@
 {
     "dataset":{
         "path": "/home/tzavellas/hea_ml_generated_files/datasets/dataset_10k/normalized.csv",
-        "legacy": true,
         "test": 0.05
     },
     "architecture": {
         "type": "lstm",
         "inputs": 6,
-        "outputs": 500,
-        "hidden": 3,
-        "neurons": 951
+        "hidden": 4,
+        "neurons": 128
     },
     "train": {
-        "epochs": 1000,
+        "epochs": 200,
         "validation": 0.2,
-        "learning_rate": 0.0004276218750584223,
-        "logs": "logs",
-        "output": "hea_lstm.h5"
+        "learning_rate": 1.3534e-04
     },
-    "working_dir": "lstm"
+    "paths": {
+        "working_dir": "lstm",
+        "output": "hea_lstm.h5",
+        "backup": "backup",
+        "logs": "logs"
+    }
 }

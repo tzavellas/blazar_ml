@@ -1,11 +1,10 @@
-#!/usr/bin/env python3
 import argparse
 import common
 import json
 import numpy as np
 import os
 import sys
-from tensorflow import keras
+import tensorflow as tf
 import dnn
 import rnn
 
@@ -15,7 +14,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
         description='Loads a dataset and trains a DNN.')
-    parser.add_argument('-c', '--config', type=str, required=True, 
+    parser.add_argument('-c', '--config', type=str, required=True,
                         help='Config file.')
 
     try:
@@ -31,36 +30,45 @@ if __name__ == "__main__":
         dataset = config['dataset']
         architecture = config['architecture']
         train = config['train']
-        working_dir = os.path.abspath(config.get('working_dir', filename))
+        hyper_params = config['hyper_parameters']
+        paths = config['paths']
+        working_dir = os.path.abspath(paths.get('working_dir', filename))
 
         if not os.path.exists(working_dir):
             os.mkdir(working_dir)
 
         dataset_path = dataset['path']
-        test_ratio = dataset.get('test', 0.05)
-        legacy = dataset.get('legacy', False)
-    
-        train_full, test = common.load_data(dataset_path, test_ratio, legacy=legacy) # returns train and test sets
-        
-        output_shape = architecture['outputs']
-        rnd_search_cv = {'dnn': dnn.regress_dnn(output_shape),
-                         'avg': dnn.regress_dnn_avg(output_shape),
-                         'concat': dnn.regress_dnn_concat(output_shape),
-                         'rnn': rnn.regress_simple_rnn(output_shape),
-                         'lstm': rnn.regress_lstm(output_shape),
-                         'gru': rnn.regress_gru(output_shape)}
-        
+        test_ratio = dataset['test']
+        features = architecture['inputs']
+        train_full, test = common.load_data(dataset_path,
+                                            features,
+                                            test_ratio)  # returns train and test sets
+
+        train_full[1] = common.normalize_clip(train_full[1])
+
+        labels = train_full[1].shape[1]
+
+        rnd_search_cv = {
+            # 'dnn': dnn.regress_dnn(output_shape, train_params, hyper_params),
+            # 'avg': dnn.regress_dnn_avg(output_shape, train_params, hyper_params),
+            # 'concat': dnn.regress_dnn_concat(output_shape, train_params, hyper_params),
+            'rnn': rnn.regress_simple_rnn(features, labels, train, hyper_params),
+            'lstm': rnn.regress_lstm(features, labels, train, hyper_params),
+            'gru': rnn.regress_gru(features, labels, train, hyper_params)
+        }
+
         choice = rnd_search_cv[architecture['type']]
 
-        logs = os.path.join(working_dir, train.get('logs', 'logs'))
-        validation_ratio = train.get('validation', .2)
-        
-        choice.fit(train_full[0], train_full[1], epochs=train['epochs'], 
-                   validation_split=validation_ratio,
-                   callbacks=[keras.callbacks.TensorBoard(logs, update_freq='epoch'),
-                              keras.callbacks.EarlyStopping(monitor='loss', patience=5)])
+        logs = os.path.join(working_dir, paths.get('logs', 'logs'))
 
-        report = os.path.join(working_dir, train['output'])
+        choice.fit(train_full[0], train_full[1],
+                   epochs=train['epochs'],
+                   validation_split=train.get('validation', .2),
+                   callbacks=[tf.keras.callbacks.TensorBoard(logs),
+                              # tf.keras.callbacks.EarlyStopping(monitor='loss', patience=5)
+                              ])
+
+        report = os.path.join(working_dir, paths.get('report', 'report.txt'))
         with open(report, 'w') as f:
             f.write('best parameters: {}\n\n'.format(choice.best_params_))
             f.write('best score: {}\n\n'.format(choice.best_score_))

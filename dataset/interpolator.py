@@ -5,7 +5,6 @@ import pandas as pd
 from scipy import interpolate
 
 
-
 def clamp(val, smallest=-30, largest=0):
     return np.maximum(smallest, np.minimum(val, largest))
 
@@ -15,7 +14,8 @@ class Interpolator:
     _CSV_LABELS = ('x', 'x^2*n(x)')
 
     @staticmethod
-    def interpolate_spectra(working_dir, x_start=-15, x_end=10, num=500, k=1):
+    def interpolate_spectra(working_dir, x_start=-15,
+                            x_end=10, num=500, k=1, clamped=None):
         '''
         Crawls working directory, reads each steady state and fits a spline.
             Parameters:
@@ -32,30 +32,34 @@ class Interpolator:
         x_n = np.linspace(x_start, x_end, num)
         interpolated_dict['x'] = x_n
 
-        for (root, dirs, files) in os.walk(working_dir, topdown=False):
-            main = Interpolator._FORT81_MAIN_CSV
-            run_id = -1
-            try:
-                run_id = int(os.path.basename(root))
-            except ValueError:
-                continue
-            s = 'y_{}'.format(run_id)
-            if main in files:
-                main = os.path.join(root, main)
-                try:
-                    logger.debug(
-                        'Reading {} for interpolation...'.format(main))
-                    y_n = Interpolator.interpolate_spectrum(main, x_n, k)
-                    clamped = clamp(y_n)
-                    interpolated_dict[s] = clamped
-                except BaseException as e:
-                    logger.error('Reading {}: {}'.format(main, e))
-                    err = err + 1
-            else:
-                y_n = np.empty(len(x_n))
-                y_n[:] = np.NaN
-                interpolated_dict[s] = y_n
-
+        with os.scandir(working_dir) as it:
+            for entry in it:
+                if entry.is_dir():
+                    run_id = -1
+                    try:
+                        run_id = int(os.path.basename(entry))
+                    except ValueError:
+                        continue
+                    s = 'y_{}'.format(run_id)
+                    main = os.path.join(entry, Interpolator._FORT81_MAIN_CSV)
+                    if os.path.exists(main):
+                        try:
+                            logger.debug(
+                                'Reading {} for interpolation...'.format(main))
+                            y_n = Interpolator.interpolate_spectrum(
+                                main, x_n, k)
+                            if clamped is None:
+                                interpolated_dict[s] = y_n
+                            else:
+                                interpolated_dict[s] = clamp(
+                                    y_n, clamped['min'], clamped['max'])
+                        except BaseException as e:
+                            logger.error('Reading {}: {}'.format(main, e))
+                            err = err + 1
+                    else:
+                        y_n = np.empty(len(x_n))
+                        y_n[:] = np.NaN
+                        interpolated_dict[s] = y_n
         return err, interpolated_dict
 
     @staticmethod

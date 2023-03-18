@@ -51,9 +51,10 @@ def calculate_predictions(models, input_set):
         The predictions for each model.
 
     '''
-    prediction = np.zeros((len(models), ) + input_set[1].shape) # preallocate
+    prediction = np.zeros((len(models), ) + input_set[1].shape)  # preallocate
     for i, model in enumerate(models):
-        prediction[i] = model.predict(input_set[0])    # index 0 means the case parameters
+        # index 0 means the case parameters
+        prediction[i] = model.predict(input_set[0])
 
     return prediction
 
@@ -79,10 +80,12 @@ def compile_model(model, compile_kwargs={}, params={}):
     '''
     learning_rate = params.get('learning_rate', 1e-3)
 
-    optimizer = compile_kwargs.get('optimizer', keras.optimizers.Adam(learning_rate=learning_rate))
-    loss=compile_kwargs.get('loss', keras.losses.MeanSquaredLogarithmicError())
-    metrics=compile_kwargs.get('metrics', [keras.metrics.MeanSquaredLogarithmicError(),
-                                           keras.metrics.MeanSquaredError()])
+    # optimizer = compile_kwargs.get('optimizer', keras.optimizers.Adam(learning_rate=learning_rate))
+    optimizer = compile_kwargs.get('optimizer', keras.optimizers.Adam())
+    loss = compile_kwargs.get(
+        'loss', keras.losses.MeanSquaredLogarithmicError())
+    metrics = compile_kwargs.get('metrics', [keras.metrics.MeanSquaredLogarithmicError(),
+                                             keras.metrics.MeanSquaredError()])
 
     model.compile(loss=loss, metrics=metrics, optimizer=optimizer)
     return model
@@ -126,7 +129,7 @@ def get_meta(architecture):
         The translated dictionary.
 
     '''
-    return {'n_features_in_': [architecture['inputs']],
+    return {'n_features_in_': architecture['inputs'],
             'n_outputs_expected_': architecture['outputs']}
 
 
@@ -175,7 +178,8 @@ def kolmogorov_smirnov_error(y1, y2):
     return stat
 
 
-def load_data(path, test_ratio=0.2, random_state=42, drop_na=True, legacy=True, sample=True):
+def load_data(path, n_features, test_ratio=0.2,
+              random_state=42, drop_na=True, sample=True):
     '''
     Loads a dataset in csv format and returns a training set and a test set
 
@@ -189,8 +193,6 @@ def load_data(path, test_ratio=0.2, random_state=42, drop_na=True, legacy=True, 
         Seed for random number generation. The default is 42.
     drop_na : bool, optional
         Removes lines that contain NaN values. The default is True.
-    legacy : bool, optional
-        Ignores the last two columns. The default is True.
     sampe : bool, optional
         Reorders the dataset. The default is True.
 
@@ -207,7 +209,9 @@ def load_data(path, test_ratio=0.2, random_state=42, drop_na=True, legacy=True, 
         dataset = raw_dataset
 
     if sample:
-        train_set = dataset.sample(frac=1-test_ratio, random_state=random_state)
+        train_set = dataset.sample(
+            frac=1 - test_ratio,
+            random_state=random_state)
         test_set = dataset.drop(train_set.index)
     else:
         if test_ratio == 0:
@@ -218,31 +222,34 @@ def load_data(path, test_ratio=0.2, random_state=42, drop_na=True, legacy=True, 
             train_set = dataset[:split_row, :]
             test_set = dataset[split_row:, :]
 
-    n_features = 6
-    if legacy:
-        x_train = train_set.iloc[:, :n_features].to_numpy()
-        y_train = train_set.iloc[:, n_features:-1].to_numpy()
+    # n_features = meta['n_features_in_']
+    # n_outputs = meta['n_outputs_expected_']
+    # diff = train_set.shape[1] - (n_features + n_outputs)
 
-        x_test = test_set.iloc[:, :n_features].to_numpy()
-        y_test = test_set.iloc[:, n_features:-1].to_numpy()
-    else:
-        x_train = train_set.iloc[:, :n_features].to_numpy()
-        y_train = train_set.iloc[:, n_features:].to_numpy()
+    # if diff:
+    #     x_train = train_set.iloc[:, :n_features].to_numpy()
+    #     y_train = train_set.iloc[:, n_features:-diff].to_numpy()
 
-        x_test = test_set.iloc[:, :n_features].to_numpy()
-        y_test = test_set.iloc[:, n_features:].to_numpy()
+    #     x_test = test_set.iloc[:, :n_features].to_numpy()
+    #     y_test = test_set.iloc[:, n_features:-diff].to_numpy()
+    # else:
+    x_train = train_set.iloc[:, :n_features].to_numpy()
+    y_train = train_set.iloc[:, n_features:].to_numpy()
 
-    return (x_train, y_train), (x_test, y_test)
+    x_test = test_set.iloc[:, :n_features].to_numpy()
+    y_test = test_set.iloc[:, n_features:].to_numpy()
+
+    return [x_train, y_train], [x_test, y_test]
 
 
-def log_gamma_range(gamma, radius, bfield, 
-                    base=10, 
+def log_gamma_range(gamma, radius, bfield,
+                    base=10,
                     q=const.e.esu.value,
-                    m=const.m_e.cgs.value, 
+                    m=const.m_e.cgs.value,
                     c=const.c.cgs.value):
     '''
     Function that calculates the range of the geext values given a gamma value
-    
+
     Parameters
     ----------
             gamma (float):          Reference logarithm gamma
@@ -257,13 +264,44 @@ def log_gamma_range(gamma, radius, bfield,
     Tuple
         The gamma geextmx range
     '''
-    v_min = 2 + gamma
-    logc = np.log(q / (m*c**2)) / np.log(base)
-    v_max = radius + bfield + logc
-    # set a hard upper limit based on code performance
-    v_max = min(v_max, 8.)
+    if hasattr(gamma, '__len__'):
+        v_min = 2 + gamma
+        logc = np.ones(gamma.shape) * np.log(q / (m * c**2)) / np.log(base)
+        v_max = radius + bfield + logc
+        v_max = np.minimum(v_max, np.ones(gamma.shape) * 8)
 
-    return v_min, v_max
+        return v_min, v_max
+    else:
+        v_min = 2 + gamma
+        logc = np.log(q / (m * c**2)) / np.log(base)
+        v_max = radius + bfield + logc
+        # set a hard upper limit based on code performance
+        v_max = min(v_max, 8.)
+
+        return v_min, v_max
+
+
+def normalize_clip(data, min_val=-30, max_val=0):
+    '''
+    Clips and normalizes data so that the have values in range [0, 1]
+
+    Parameters
+    ----------
+    data : ndarray
+        The data.
+    min_val : float, optional
+        The minimul value. The default is -30.
+    max_val : float, optional
+        The maximum value. The default is 0.
+
+    Returns
+    -------
+    ndarray
+        The normalized data.
+
+    '''
+    clipped = np.clip(data, min_val, max_val)
+    return (clipped - min_val) / (max_val - min_val)
 
 
 def split_valid(x_train_full, y_train_full, ratio=0.2):
@@ -285,7 +323,7 @@ def split_valid(x_train_full, y_train_full, ratio=0.2):
         The validation set and the training set.
 
     '''
-    n = int(len(x_train_full)*ratio)
+    n = int(len(x_train_full) * ratio)
 
     x_valid, x_train = x_train_full[:n], x_train_full[n:]
     y_valid, y_train = y_train_full[:n], y_train_full[n:]

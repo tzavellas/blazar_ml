@@ -1,7 +1,6 @@
 {
     "dataset":{
         "path": "/home/tzavellas/hea_ml_generated_files/datasets/dataset_10k/normalized.csv",
-        "legacy": true,
         "test": 0.05
     },
     "architecture": {
