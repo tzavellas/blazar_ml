@@ -18,24 +18,25 @@ def to_baseline(string):
 
 
 class CodeLauncher:
-    _CODE_INP                   = 'code.inp'
-    _FORT81                     = 'fort.81'
-    _EXTENDED_CSV               = 'extended.csv'
-    _PLOT                       = 'plot_clean'
-    ELAPSED_TIME_KEY            = 'elapsed_time'
-    ELAPSED_TIME_BASELINE_KEY   = 'elapsed_time_baseline'
-    SUCCESS_KEY                 = 'success'
-    _CSV_LABELS                 = ('x', 'x^2*n(x)')
+    _CODE_INP = 'code.inp'
+    _FORT81 = 'fort.81'
+    _EXTENDED_CSV = 'extended.csv'
+    _PLOT = 'plot_clean'
+    ELAPSED_TIME_KEY = 'elapsed_time'
+    ELAPSED_TIME_BASELINE_KEY = 'elapsed_time_baseline'
+    SUCCESS_KEY = 'success'
+    _CSV_LABELS = ('x', 'x^2*n(x)')
 
-    def __init__(self, exec_path='', working_dir='', input='', img_format='png'):
+    def __init__(self, exec_path='', working_dir='',
+                 input_df='', img_format='png'):
         self.exec_path = exec_path
         self.working_dir = working_dir
-        self.inputs_dataframe = input
+        self.inputs_dataframe = input_df
         self._img_format = img_format
 
     def __get_input_at(self, row):
         '''
-        Convenience function. Retrieves a given row of the inputs dataframe, 
+        Convenience function. Retrieves a given row of the inputs dataframe,
         converts it to dictionary and returns it.
             Parameters:
                 output_dir (str):               The output directory.
@@ -76,7 +77,8 @@ class CodeLauncher:
 
         return success, elapsed_time, x, y, input_snapshot
 
-    def __run_baseline(self, input_snapshot, exec_path, output_dir, extra_args):
+    def __run_baseline(self, input_snapshot, exec_path,
+                       output_dir, extra_args):
         '''
         Convenience function. Runs the baseline case.
             Parameters:
@@ -181,7 +183,7 @@ class CodeLauncher:
     @staticmethod
     def save(working_dir, baseline=False):
         '''
-        Wrapper function. Reads a fort.81 file in the working directory, extracts 
+        Wrapper function. Reads a fort.81 file in the working directory, extracts
         the steady state spectrum, saves it in a CSV file. Optionally, it saves a
         plot of the spectrum
             Parameters:
@@ -289,28 +291,29 @@ class CodeLauncher:
             self._working_dir = os.path.abspath(dir)
         logger.info('working directory {}'.format(self._working_dir))
 
-    def set_inputs_dataframe(self, input):
+    def set_inputs_dataframe(self, input_file):
         '''
         Setter for the inputs dataframe.
             Parameters:
-                input (str):               The csv file containing the inputs.
+                input_file (str):           The csv file containing the inputs.
         '''
         logger = logging.getLogger(__name__)
 
-        if not os.path.isabs(input):
-            input = os.path.join(self.working_dir, input)
+        if not os.path.isabs(input_file):
+            input_file = os.path.join(self.working_dir, input_file)
 
-        if self.load_inputs_dataframe(input):
+        if self.load_inputs_dataframe(input_file):
             # add two extra columns
             self._inputs_dataframe.insert(1, self.SUCCESS_KEY, "False")
             self._inputs_dataframe.insert(2, self.ELAPSED_TIME_KEY, 0.0)
-            self._inputs_dataframe.insert(3, self.ELAPSED_TIME_BASELINE_KEY, 0.0)
+            self._inputs_dataframe.insert(
+                3, self.ELAPSED_TIME_BASELINE_KEY, 0.0)
             logger.debug('Added columns: {}, {}, {}'.format(
                 self.SUCCESS_KEY, self.ELAPSED_TIME_KEY, self.ELAPSED_TIME_BASELINE_KEY))
         else:
             self._inputs_dataframe = None
             logger.debug(
-                'Inputs file {} does not exist. No inputs dataframe is set'.format(input))
+                'Inputs file {} does not exist. No inputs dataframe is set'.format(input_file))
 
     exec_path = property(get_exec_path, set_exec_path)
     working_dir = property(get_working_dir, set_working_dir)
@@ -330,7 +333,7 @@ class CodeLauncher:
 
         return program_input
 
-    def mkdir(self, dir):
+    def mkdir(self, directory):
         '''
         Creates a directory under the working directory and returns its path.
         If the directory already exists, it removes it along with its contents.
@@ -339,7 +342,7 @@ class CodeLauncher:
         '''
         logger = logging.getLogger(__name__)
 
-        output_dir = os.path.join(self.working_dir, str(dir))
+        output_dir = os.path.join(self.working_dir, str(directory))
 
         if os.path.exists(output_dir):  # remove output_dir if it exists
             logger.warning(
@@ -378,7 +381,8 @@ class CodeLauncher:
         os.symlink(self.exec_path, link)
         return link
 
-    def launch_process(self, executable, program_input, output_dir, outstream_file, extra_args):
+    def launch_process(self, executable, program_input,
+                       output_dir, outstream_file, extra_args):
         '''
         Launches a program instance. Program stdout is stored in a file.
             Parameters:
@@ -445,9 +449,9 @@ class CodeLauncher:
         link = self.ln(out_dir)
 
         # get input dictionary from row
-        input = self.__get_input_at(run_id)
+        input_dict = self.__get_input_at(run_id)
         # create an input snapshot
-        input_snapshot = InputsGenerator(input)
+        input_snapshot = InputsGenerator(input_dict)
         logger.debug('run id {}, input snapshot {}'.format(
             run_id, hex(id(input_snapshot))))
         # run the case

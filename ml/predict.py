@@ -5,11 +5,8 @@ import numpy as np
 import os
 import pandas as pd
 import sys
-from tensorflow import keras
-
-
-def de_normalize(data, min_val=-30, max_val=0):
-    return min_val + (max_val - min_val) * data
+import tensorflow as tf
+import common
 
 
 def plot(y, i, label):
@@ -20,16 +17,16 @@ def plot(y, i, label):
 
 model_path = sys.argv[1]
 
-model = keras.models.load_model(model_path)
+model = tf.keras.models.load_model(model_path)
 
 new_dataset = sys.argv[2]
 
 new_set, new_test = common.load_data(new_dataset, 0) # returns train and test sets
 
-y_d = de_normalize(new_set[1])
+y_d = common.de_normalize(new_set[1])
 
 y_pred = model.predict(new_set[0])
-y_pred_d = de_normalize(y_pred)
+y_pred_d = common.de_normalize(y_pred)
 
 if len(sys.argv) > 3:
     out_dir = sys.argv[3]

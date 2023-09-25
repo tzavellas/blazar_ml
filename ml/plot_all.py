@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import argparse
 import common
 from dtaidistance import dtw
@@ -8,7 +7,8 @@ import numpy as np
 import os
 import sys
 from sklearn import metrics
-from tensorflow import keras
+import tensorflow as tf
+from astropy import constants as const
 
 
 def mean_error_ranking(error, model_ids):
@@ -33,8 +33,8 @@ def mean_error_ranking(error, model_ids):
     m_id = np.array(model_ids)
     mm = np.mean(error, axis=1)
     ss = np.std(error, axis=1)
-    argsort = np.argsort(mm)    
-    return m_id[argsort].tolist(), list(zip(mm,ss))
+    argsort = np.argsort(mm)
+    return m_id[argsort].tolist(), list(zip(mm, ss))
 
 
 def mean_ranking(error, model_ids):
@@ -68,6 +68,55 @@ def mean_ranking(error, model_ids):
     return m_id[argsort].tolist(), mean, rankings
 
 
+def plot_grouped_cummulative_barchart(rankings, model_ids, out_dir):
+    '''
+    Plots a grouped barchart of the rankings
+
+    Parameters
+    ----------
+    rankings : ndarray
+        An array of the rankings [num_models x num_cases].
+    model_ids : list
+        List of model ids.
+    out_dir : str
+        Path to save the plot.
+
+    Returns
+    -------
+    None.
+
+    '''
+    n, m = rankings.shape
+    counts = np.zeros((n, n))
+    for i, rank in enumerate(rankings):
+        for j, model in enumerate(model_ids):
+            counts[i, j] = np.count_nonzero(rankings[i, :] == (j + 1))
+    counts = counts / m
+    for i in range(n):
+        for j in range(1, n):
+            counts[i, j] = counts[i, j - 1] + counts[i, j]
+    fig, ax = plt.subplots()
+    x = np.arange(len(model_ids), dtype=np.int16)
+    width = 0.15
+    pos = x - 3 * width / 2
+    for i, c in enumerate(counts):
+        ax.bar(pos, c, width, label=model_ids[i])
+        pos = pos + width
+    ax.set_ylabel('Frequency')
+    ax.set_xlabel('Rank')
+    ax.legend()
+
+    # Creates x-axis string labels, eg 1, 2, 3, ...
+    labels = []
+    for i in range(n):
+        labels.append('{}'.format(i + 1))
+    ax.set_xticks(x, labels)
+
+    fig_path = os.path.join(out_dir, 'ranking_cummulative_bar_chart.svg')
+    plt.savefig(fig_path, format='svg')
+    plt.close(fig)
+
+
 def plot_grouped_barchart(rankings, model_ids, out_dir):
     '''
     Plots a grouped barchart of the rankings
@@ -86,32 +135,33 @@ def plot_grouped_barchart(rankings, model_ids, out_dir):
     None.
 
     '''
-    n = rankings.shape[0]
+    n, m = rankings.shape
     counts = np.zeros((n, n))
     for i, rank in enumerate(rankings):
         for j, model in enumerate(model_ids):
             counts[i, j] = np.count_nonzero(rankings[i, :] == (j + 1))
+    counts = counts / m
     fig, ax = plt.subplots()
     x = np.arange(len(model_ids), dtype=np.int16)
     width = 0.15
-    pos = x - 3*width/2
+    pos = x - 3 * width / 2
     for i, c in enumerate(counts):
         ax.bar(pos, c, width, label=model_ids[i])
         pos = pos + width
     ax.set_ylabel('Frequency')
     ax.set_xlabel('Rank')
     ax.legend()
-    
+
     # Creates x-axis string labels, eg 1, 2, 3, ...
     labels = []
     for i in range(n):
         labels.append('{}'.format(i + 1))
     ax.set_xticks(x, labels)
-    
+
     fig_path = os.path.join(out_dir, 'ranking_bar_chart.svg')
     plt.savefig(fig_path, format='svg')
     plt.close(fig)
-    
+
 
 def plot(y, mark, lab, dy=None):
     '''
@@ -170,7 +220,7 @@ def plot_matrix(data, name, labels, out_dir, symbols='ox+|_', scale='linear'):
     '''
     fig = plt.figure()
     for i, y in enumerate(data):
-        plt.plot(y, marker=symbols[i], linestyle='',  label=labels[i])
+        plt.plot(y, marker=symbols[i], linestyle='', label=labels[i])
         plt.xlabel('case')
         plt.ylabel(name)
         plt.yscale(scale)
@@ -180,7 +230,8 @@ def plot_matrix(data, name, labels, out_dir, symbols='ox+|_', scale='linear'):
     plt.close(fig)
 
 
-def plot_cases(y, err_pred, prediction, labels, out_dir, cases, symbols='ox+|_'):
+def plot_cases(y, err_pred, prediction, labels,
+               out_dir, cases, symbols='ox+|_'):
     '''
     Plots specific cases. Actual spectrum and prediction
 
@@ -206,17 +257,33 @@ def plot_cases(y, err_pred, prediction, labels, out_dir, cases, symbols='ox+|_')
     None.
 
     '''
+    c = const.c.cgs.value
+    me = const.m_e.cgs.value
+    h = const.h.cgs.value
+    x_grid = np.linspace(-15, 10, 500)
+    x_norm = np.log10(me * c**2 / h)
+    xp = x_grid + x_norm
+
     y_pred = common.de_normalize(prediction)
     y_d = common.de_normalize(y)    # index 1 means the spectrum values
+    # print(len(xp),len(y_d[0]))
     for i in cases:
         y_i = y_d[i]
-        fig = plt.figure(i)
-        plot(y_i, symbols[0], 'actual')
+        figsize = (8,4)
+        fig = plt.figure(i,figsize=figsize)
+        # plot(y_i, symbols[0], 'Atheνa')
+        # plt.plot(xp, y_i[:-1], '-', label='ATHEνA')
+        plt.plot(xp, y_i, 'k-', label='ATHEνA')
+        plt.ylabel('log(vFv) [arbitery units]')
+        plt.xlabel('log(v) [Hz]')
         for j, y_p in enumerate(y_pred):
             if err_pred is None:
-                plot(y_p[i], symbols[j + 1], labels[j])
+                # plot(y_p[i], symbols[j + 1], labels[j])
+                # plt.plot(xp,y_p[i, :-1],  marker=symbols[j + 1],label=labels[j],markersize=2, linestyle='')
+                plt.plot(xp,y_p[i],color='orange',  marker=symbols[j + 1],label=labels[j],markersize=2, linestyle='',alpha=1.0)
             else:
-                plot(y_p[i], symbols[j + 1], labels[j], err_pred[i, j])
+                plot(y_p[i, :-1], symbols[j + 1], labels[j], err_pred[i, j])
+        plt.ylim([-5.5,-3.0])
         plt.legend()
         fig_path = os.path.join(out_dir, '{}.svg'.format(i))
         plt.savefig(fig_path, format='svg')
@@ -252,6 +319,10 @@ def plot_all_cases(y, err_pred, prediction, labels, out_dir, symbols='ox+|_'):
     for i, y_i in enumerate(y_d):
         fig = plt.figure(i)
         plot(y_i, symbols[0], 'actual')
+        plt.ylabel('log(vFv)')
+        plt.xlabel('log(v) [Hz]')
+        plt.ylim([-15,-5])
+        # plt.xlim([10,30])
         for j, y_p in enumerate(y_pred):
             if err_pred is None:
                 plot(y_p[i], symbols[j + 1], labels[j])
@@ -278,18 +349,30 @@ if __name__ == "__main__":
         config = json.loads(config.read())
 
         dataset = config['dataset']
-        working_dir = os.path.abspath(config['working_dir'])
         plot_options = config['plot_options']
-        
+        paths = config['paths']
+
+        working_dir = os.path.abspath(paths['working_dir'])
         if not os.path.exists(working_dir):
             os.mkdir(working_dir)
 
-        input_set, _ = common.load_data(dataset['path'], 0, sample=False) # test_set is empty because ratio is 0
+        dataset_path = dataset['path']
+        n_features = dataset['inputs']
+        # test_set is empty because ratio is 0
+        input_set, _ = common.load_data(dataset_path, n_features, 0)
 
-        model_files = [os.path.basename(file) for file in config['models']]
-        models = [keras.models.load_model(m) for m in config['models']]
+        input_set[1] = common.normalize_clip(input_set[1])
+        # input_set[1] = common.normalize_clip2(input_set[1])
+
+        models = []
+        model_names = []
+        for file in paths['models']:
+            model = tf.keras.models.load_model(file)
+            models.append(model)
+            model_names.append(model.name)
+
         if plot_options.get('error', False):
-            error_model = keras.models.load_model(config['error_model'])
+            error_model = tf.keras.models.load_model(config['error_model'])
         else:
             error_model = None
 
@@ -303,30 +386,51 @@ if __name__ == "__main__":
                    "integral": common.integral_error,
                    "kolmogorov_smirnov": common.kolmogorov_smirnov_error,
                    "mse": metrics.mean_squared_error}
-        
+
         choice = metrics[config.get('metric', 'kolmogorov_smirnov')]
 
         error_metric = common.calculate_error(input_set[1], prediction, choice)
 
-        rank_of_mean, stats = mean_error_ranking(error_metric, model_files)
+        rank_of_mean, stats = mean_error_ranking(error_metric, model_names)
 
-        mean_rank, mean_val, rankings = mean_ranking(error_metric, model_files)
+        mean_rank, mean_val, rankings = mean_ranking(error_metric, model_names)
 
-        plot_matrix(error_metric, 'error', model_files, working_dir, scale='log')
+        # np.savetxt(os.path.join(working_dir, 'mean_rank.txt'), mean_rank)
+        # np.savetxt(os.path.join(working_dir, 'mean_val.txt'), mean_val)
+
+        plot_matrix(
+            error_metric,
+            'error',
+            model_names,
+            working_dir,
+            scale='log')
 
         if plot_all == True:
-            if error_model is not None:
-                err_pred = error_model.predict(input_set[0])
-            else:
-                err_pred = None
-            plot_all_cases(input_set[1], err_pred, prediction, model_files, working_dir)
+            # if error_model is not None:
+            #     err_pred = error_model.predict(input_set[0])
+            # else:
+            #     err_pred = None
+            plot_all_cases(
+                input_set[1],
+                None,
+                prediction,
+                model_names,
+                working_dir)
         elif cases:
-            if error_model is not None:
-                err_pred = error_model.predict(input_set[0])
-            else:
-                err_pred = None
-            plot_cases(input_set[1], err_pred, prediction, model_files, working_dir, cases)
+            # if error_model is not None:
+            #     err_pred = error_model.predict(input_set[0])
+            # else:
+            #     err_pred = None
+            plot_cases(
+                input_set[1],
+                None,
+                prediction,
+                model_names,
+                working_dir,
+                cases)
 
         if plot_rankings == True:
-            plot_grouped_barchart(rankings, model_files, working_dir)
-            # plot_matrix(rankings, 'ranking', model_files, working_dir)
+            plot_grouped_barchart(rankings, model_names, working_dir)
+            plot_grouped_cummulative_barchart(
+                rankings, model_names, working_dir)
+            # plot_matrix(rankings, 'ranking', model_names, working_dir)

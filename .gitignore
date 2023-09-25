@@ -1,4 +1,8 @@
 # User-defined files
+ml/SED*
+ml/gru
+ml/lstm
+ml/Fit*
 logs
 *y_pred.csv
 *.txt

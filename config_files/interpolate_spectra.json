@@ -1,0 +1,18 @@
+{
+    "dataset":{
+        "working_dir": "/home/tzavellas/hea_ml_generated_files/datasets/dataset_10k",
+        "output": "interpolated.csv",
+        "logging": "logging.ini"
+    },
+    "interpolation": {
+        "degree": 1,
+        "x_start": -15,
+        "x_end": 10,
+        "n_points": 500,
+        "clamped": false
+    },
+    "clamp": {
+        "min": -30,
+        "max": 0
+    },
+}

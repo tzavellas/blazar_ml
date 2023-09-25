@@ -9,11 +9,11 @@ dependencies:
   - emcee
   - jupyter
   - matplotlib
+  - keras-tuner
   - numpy
   - pandas
   - peakutils
   - python
-  - scikit-learn
   - spyder
   - tensorflow-gpu=2.11.0
   - ultranest
