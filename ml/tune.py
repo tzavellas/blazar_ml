@@ -90,9 +90,11 @@ if __name__ == "__main__":
         tuner.search_space_summary()
 
         if overwrite:
+            hp = kt.HyperParameters()
+            hp.Choice('batch_size', values=train_parameters['batch_size'])
             epochs = train_parameters['epochs']
             tuner.search(train_full[0], train_full[1],
-                         batch_size=train_parameters['batch_size'],
+                         batch_size=hp.get('batch_size'),
                          epochs=epochs,
                          validation_split=train_parameters['validation_ratio'],
                          callbacks=[tf.keras.callbacks.TensorBoard(logs),

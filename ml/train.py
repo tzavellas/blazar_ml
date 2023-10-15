@@ -46,14 +46,14 @@ if __name__ == "__main__":
                                                 n_features,
                                                 test_ratio)  # returns train and test sets
         except Exception as e:
-            print('Loading data: ' + e)
+            print(f'Loading data: {e}')
             sys.exit(1)
 
-        # train_full[1] = common.normalize_clip(train_full[1])
-        train_full[1] = common.normalize_clip2(train_full[1])
+        # train_full[1] = common.normalize_clip2(train_full[1])
+        # test[1] = common.normalize_clip2(test[1])
 
-        # test[1] = common.normalize_clip(test[1])
-        test[1] = common.normalize_clip2(test[1])
+        train_full[1] = common.normalize_clip(train_full[1])
+        test[1] = common.normalize_clip(test[1])
 
         n_labels = train_full[1].shape[1]
 
@@ -80,8 +80,8 @@ if __name__ == "__main__":
                       metrics=tf.keras.metrics.MeanSquaredError())
         model.summary()
 
-        logs = os.path.join(working_dir, 'logs_{}'.format(name))
-        backup = os.path.join(working_dir, 'backup_{}'.format(name))
+        logs = os.path.join(working_dir, f'logs_{name}')
+        backup = os.path.join(working_dir, f'backup_{name}')
         # Train the model
         history = model.fit(train_full[0], train_full[1],
                             epochs=train_parameters['epochs'],
@@ -94,9 +94,9 @@ if __name__ == "__main__":
                                        ])
         # Evaluate the model
         mse_test = model.evaluate(*test)
-        print('MSE test: {}'.format(mse_test))
+        print(f'MSE test: {mse_test}')
 
         # Save the model
         save_path = os.path.join(working_dir, paths['output'])
-        print('Saving model at: {}'.format(save_path))
+        print(f'Saving model at: {save_path}')
         model.save(save_path)

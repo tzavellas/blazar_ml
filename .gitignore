@@ -1,4 +1,6 @@
 # User-defined files
+ml/tune_*
+ml/train_*
 ml/SED*
 ml/gru
 ml/lstm
