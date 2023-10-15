@@ -1,0 +1,17 @@
+{
+    "paths" : {
+        "dataset": "dataset.csv",
+        "executable" : "/home/tzavellas/code",
+        "input" : "/home/tzavellas/hea_ml_generated_files/inputs/inputs_1k.csv",
+        "interpolated" : "interpolated.csv",
+        "logging": "logging.ini",
+        "working_dir": "/home/tzavellas/hea_ml_generated_files/datasets/dataset_1k"
+    },
+    "options" : {
+        "extra_args" : [],    
+        "format" : "png",
+        "num_proc" : 16,
+        "plot_spectra" : false,
+        "skip_run" : true
+    }    
+}

@@ -1,0 +1,21 @@
+{
+    "dataset":{
+        "path": "/home/tzavellas/hea_ml_generated_files/datasets/dataset_10k/dataset.csv",
+        "inputs": 6
+    },
+    "train_parameters": {
+        "architecture": "dnn",
+        "name": "dnn_bayes",
+        "hidden": 2,
+        "neurons": 40,
+        "batch_size": 64,
+        "epochs": 250,
+        "learning_rate": 0.009605246254150412,
+        "test_ratio": 0.05,
+        "validation_ratio": 0.2
+    },
+    "paths": {
+        "working_dir": "dnn",
+        "output": "hea_dnn_bayes.h5"
+    }
+}
