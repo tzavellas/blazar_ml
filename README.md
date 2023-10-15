@@ -36,7 +36,7 @@ Creates a CSV containing vectors of inputs.
 python dataset/prepare_inputs.py -s count -o path_to_csv
 ```
 
-###Generate Dataset
+### Generate Dataset
 Create a `config` using a template under `config_files/dataset/template.json`. 
 Update the file to use the `path_to_csv` of the previous step.
 Then run:
@@ -44,7 +44,7 @@ Then run:
 python dataset/generate_dataset.py -c config
 ```
 
-###Tuning
+### Tuning
 
 
 

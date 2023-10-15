@@ -1,6 +1,6 @@
 {
     "dataset":{
-        "path": "../../../../datasets/leptonic_raw/10k.csv.gz",
+        "path": "ENV_VARIABLE_PLACEHOLDER",
         "inputs": 6
     },
     "hyper_parameters": {
