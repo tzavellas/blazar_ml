@@ -34,24 +34,20 @@ head -1 file.csv | sed 's/[^,]//g' | wc -c
 
 Prepare Inputs
 --------------
-python prepare_inputs.py -s 10000 -o ~/PROJECTS_MP/inputs/out10k.csv
+python dataset/prepare_inputs.py -s 10000 -o ~/PROJECTS_MP/inputs/out10k.csv
 
 Generate Dataset
 ----------------
-python generate_dataset.py -e ~/PROJECTS_MP/code_clean/out -i ~/PROJECTS_MP/inputs/out10k.csv -w ~/PROJECTS_MP/datasets/dataset_10k
+python dataset/generate_dataset.py -c config_file
 
 Interpolate
 -----------
-python interpolate_spectra.py -w ~/PROJECTS_MP/datasets/dataset_10k
+python dataset/interpolate_spectra.py -c config_file
 
 Train
 -----
-python migrated/LSTM_network/training/mymodel_training.py ~/PROJECTS_MP/datasets/dataset_10k/normalized.csv saved_1k_b50 50
+python ml/tune.py -c config_file
+python ml/train.py -c config_file
+OR
+sh ml/train.sh -m <mode> -t <type> [-c <config_path>]
 
-Predict
--------
-python migrated/LSTM_network/prediction/mymodel_classification.py ~/PROJECTS_MP/inputs/out100.csv ~/PROJECTS_MP/hea_ml.git/saved_model ~/PROJECTS_MP/hea_ml.git/prediction/denormalized_100.csv 50
-
-Evaluate
---------
-python evaluation.py ~/PROJECTS_MP/datasets/dataset_100/interpolated.csv ~/PROJECTS_MP/hea_ml.git/prediction_1k_b100/denormalized_100.csv ~/PROJECTS_MP/hea_ml.git/prediction_1k_b100/rms_100.csv

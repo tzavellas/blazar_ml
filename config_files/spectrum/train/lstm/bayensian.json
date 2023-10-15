@@ -1,6 +1,6 @@
 {
     "dataset":{
-        "path": "/home/tzavellas/hea_ml_generated_files/datasets/dataset_10k/dataset.csv",
+        "path": "../../../../datasets/leptonic_raw/10k.csv.gz",
         "inputs": 6
     },
     "train_parameters": {
