@@ -46,16 +46,13 @@ run_python_script() {
 CONFIG_PATH="../config_files/spectrum"
 
 # Parse the options and arguments
-while getopts "hct:m:" opt; do
+while getopts "ht:m:c:" opt; do
   case $opt in
     h) # Display help
       print_help
       exit 0
       ;;
-    c) # Set the configuration path
-      CONFIG_PATH=$OPTARG
-      ;;
-    m) # Set the mode if it is one of the expected values
+   m) # Set the mode if it is one of the expected values
       MODE=$OPTARG
       case $MODE in
         "train"|"tune")
@@ -76,6 +73,9 @@ while getopts "hct:m:" opt; do
           exit 1
           ;;
       esac
+      ;;
+    c) # Set the configuration path
+      CONFIG_PATH=$OPTARG
       ;;
     \?) # Invalid option
       echo "Invalid option: -$OPTARG" >&2
@@ -102,6 +102,10 @@ if [ -z "$MODE" ]; then
   exit 1
 fi
 
+if [ -n "$CONFIG_PATH" ]; then
+  echo "Config Path: $CONFIG_PATH"
+fi
+
 check_python_version "3.7"
 
 # Print the TYPE
@@ -111,12 +115,13 @@ echo "NN Type: $TYPE"
 echo "using configuration path: $(readlink -f $CONFIG_PATH/$MODE)"
 echo ""
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 METHODS=("bayensian" "grid" "random")
 
 for METHOD in "${METHODS[@]}"; do
     FILE=$(readlink -f $CONFIG_PATH/$MODE/$TYPE/$METHOD.json)
     if [ "$?" -eq 0 ]; then
-        run_python_script "$MODE.py" "$FILE"
+        run_python_script "$DIR/$MODE.py" "$FILE"
         if [ $? -ne 0 ]; then
             echo ""
             echo "File $FILE failed to run. Exiting.."
