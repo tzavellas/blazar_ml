@@ -1,0 +1,17 @@
+{
+    "paths" : {
+        "dataset": "dataset.csv",
+        "executable" : "MODEL_EXECUTABLE",
+        "input" : "INPUTS_CSV",
+        "interpolated" : "interpolated.csv",
+        "logging": "logging.ini",
+        "working_dir": "WORKING_DIR"
+    },
+    "options" : {
+        "extra_args" : [],    
+        "format" : "png",
+        "num_proc" : 16,
+        "plot_spectra" : false,
+        "skip_run" : false
+    }    
+}
