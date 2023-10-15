@@ -33,15 +33,15 @@ pip install autopep8 astropy matplotlib numpy pandas scipy
 ### Sample input parameter space
 Creates a CSV containing vectors of inputs.
 ```bash
-python dataset/prepare_inputs.py -s <count> -o <path_to_csv>
+python dataset/prepare_inputs.py -s count -o path_to_csv
 ```
 
 ###Generate Dataset
-Create a `config_file` using a template under `config_files/dataset/template.json`. 
-Update the file to use the `<path_to_csv>` of the previous step.
+Create a `config` using a template under `config_files/dataset/template.json`. 
+Update the file to use the `path_to_csv` of the previous step.
 Then run:
 ```bash
-python dataset/generate_dataset.py -c <path/to/config>
+python dataset/generate_dataset.py -c config
 ```
 
 ###Tuning
