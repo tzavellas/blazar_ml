@@ -4,20 +4,16 @@
 
 ## Installation
 
-### Windows
-Using Anaconda:
-```bash
-# Create a new environment
-conda create -y --name hea_ml
-
-# Activate environment
-conda activate hea_ml
-
-# Install dependencies
-conda install -y autopep8 astropy matplotlib numpy pandas
-```
+### Docker
+@todo
 
 ### Linux
+Using conda/mamba:
+```
+mamba env create -f environment.yml
+conda activate tf3
+```
+
 Using pip:
 ```bash
 # Install virtualenv
@@ -34,21 +30,28 @@ pip install autopep8 astropy matplotlib numpy pandas scipy
 ```
 
 ## Usage
+### Sample input parameter space
+Creates a CSV containing vectors of inputs.
 ```bash
-python src/prepare_inputs.py
-python src/generate_dataset.py --executable /path/to/program --input out.csv
-python src/plot_spectra.py --working-dir /path/to/dir --output spectra.png
+python dataset/prepare_inputs.py -s <count> -o <path_to_csv>
 ```
 
-## Removal
-### Windows
+###Generate Dataset
+Create a `config_file` using a template under `config_files/dataset/template.json`. 
+Update the file to use the `<path_to_csv>` of the previous step.
+Then run:
 ```bash
-conda deactivate
-conda remove --name hea_ml --all
+python dataset/generate_dataset.py -c <path/to/config>
 ```
+
+###Tuning
+
+
+
+## Removal
 ### Linux
 ```bash
-deactivate
+conda deactivate
 rm -rf hea_ml
 ```
 #
