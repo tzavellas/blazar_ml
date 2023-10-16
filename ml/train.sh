@@ -39,8 +39,8 @@ run_python_script() {
         echo "Python script not found: $script_path"
         return 1
     fi
-#    echo "python $script_path -c $config_file"
-    python "$script_path" -c "$config_file"
+    echo "python $script_path -c $config_file"
+    python "$script_path" -c "$config_file" > output.txt 2>&1
 }
 
 CONFIG_PATH="../config_files/spectrum"
