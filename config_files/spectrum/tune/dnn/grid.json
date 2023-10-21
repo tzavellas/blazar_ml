@@ -21,6 +21,6 @@
         "working_dir": "tune_dnn_grid",
         "logs": "logs",
         "report": "report.txt",
-        "overwrite": true
+        "overwrite": false
     }
 }

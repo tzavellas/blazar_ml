@@ -50,9 +50,8 @@ if __name__ == "__main__":
         n_features = dataset['inputs']
 
         try:
-            train_full, test = common.load_data(dataset_path,
-                                                n_features,
-                                                test_ratio)  # returns train and test sets
+            train_full, test = common.load_data(
+                dataset_path, n_features, test_ratio)  # returns train and test sets
         except Exception as e:
             print(f'Loading data: {e}')
             sys.exit(1)
@@ -83,9 +82,11 @@ if __name__ == "__main__":
 
         # Choose a type and compile it
         model = models[train_parameters['architecture']]
-        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=train_parameters['learning_rate']),
-                      loss=tf.keras.losses.MeanSquaredLogarithmicError(),
-                      metrics=tf.keras.metrics.MeanSquaredError())
+        model.compile(
+            optimizer=tf.keras.optimizers.Adam(
+                learning_rate=train_parameters['learning_rate']),
+            loss=tf.keras.losses.MeanSquaredLogarithmicError(),
+            metrics=tf.keras.metrics.MeanSquaredError())
         model.summary()
 
         logs = os.path.join(working_dir, f'logs_{name}')

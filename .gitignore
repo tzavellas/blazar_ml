@@ -1,4 +1,6 @@
 # User-defined files
+.vscode
+*.dat
 ml/tune_*
 ml/train_*
 ml/SED*
