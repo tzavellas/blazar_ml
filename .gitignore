@@ -14,13 +14,7 @@ logs
 saved_model*
 migrated*
 save_j1*
-tf_logs_j1*
 report.txt
-migrated/PDE\ model\ simulation
-migrated/SDE\ model\ simulation
-migrated/LSTM_network/training/mymodel_training.q
-migrated/LSTM_network/training/README.md
-migrated/README.md
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
