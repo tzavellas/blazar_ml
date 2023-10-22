@@ -27,13 +27,12 @@ if __name__ == "__main__":
     with open(args.config) as config:
         config = json.loads(config.read())
 
-        if config['dataset']['path'] == 'ENV_VARIABLE_PLACEHOLDER':
-            env_var_value = os.getenv('HEA_DATASET_PATH')
-            if env_var_value:
-                config['dataset']['path'] = env_var_value
-            else:
-                print('Environment variable HEA_DATASET_PATH is not set!')
-                sys.exit(1)
+        # Check config dictionary for environment replacement
+        try:
+            config = common.check_environment(config)
+        except ValueError as e:
+            print(f'{e}')
+            sys.exit(1)
 
         # Read config dictionaries
         dataset = config['dataset']
