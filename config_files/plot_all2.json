@@ -1,0 +1,20 @@
+{
+    "dataset":{
+        "path": "/home/tzavellas/hea_ml_generated_files/datasets/dataset_100/dataset.csv",
+        "inputs": 6
+    },
+    "metric": "kolmogorov_smirnov",
+    "plot_options":{
+        "all": false,
+        "cases": [0, 10, 20, 32],
+        "error": false,
+        "rankings": true
+    },
+    "paths" : {
+        "models": [ "/home/tzavellas/hea_ml.git/ml/lstm/hea_lstm_bayes.h5",
+                    "/home/tzavellas/hea_ml.git/ml/lstm/hea_lstm_grid.h5",
+                    "/home/tzavellas/hea_ml.git/ml/lstm/hea_lstm_random.h5"
+                ],
+        "working_dir": "/home/tzavellas/hea_ml_generated_files/datasets/plots"
+    }
+}
