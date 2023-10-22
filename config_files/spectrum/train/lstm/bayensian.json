@@ -1,5 +1,5 @@
 {
-    "dataset":{
+    "dataset": {
         "path": "ENV_VARIABLE_PLACEHOLDER",
         "inputs": 6
     },
@@ -11,7 +11,7 @@
         "batch_size": 64,
         "epochs": 250,
         "learning_rate": 0.009605246254150412,
-        "test_ratio": 0.05,
+        "test_ratio": 0.0,
         "validation_ratio": 0.2
     },
     "paths": {
