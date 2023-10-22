@@ -27,6 +27,8 @@ if __name__ == "__main__":
     with open(args.config) as config:
         config = json.loads(config.read())
 
+        # Check if user set ENV_VARIABLE_PLACEHOLDER as a dataset path and use
+        # HEA_DATASET_PATH environment variable if it exists
         if config['dataset']['path'] == 'ENV_VARIABLE_PLACEHOLDER':
             env_var_value = os.getenv('HEA_DATASET_PATH')
             if env_var_value:

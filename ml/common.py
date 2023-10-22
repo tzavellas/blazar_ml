@@ -1,5 +1,6 @@
 from astropy import constants as const
 import numpy as np
+import os
 import pandas as pd
 import keras_tuner as kt
 from scipy import integrate, stats
@@ -7,7 +8,7 @@ import tensorflow as tf
 
 
 def calculate_error(y, y_pred, err_func):
-    '''
+    """
     Calculates the error metric between two inputs using a given error function
 
     Parameters
@@ -24,7 +25,7 @@ def calculate_error(y, y_pred, err_func):
     error_metric : ndarray
         The error metric.
 
-    '''
+    """
     error_metric = np.zeros((len(y_pred), len(y)))
     for i, y_i in enumerate(y):
         for j, y_j in enumerate(y_pred):
@@ -34,7 +35,7 @@ def calculate_error(y, y_pred, err_func):
 
 
 def calculate_predictions(models, input_set):
-    '''
+    """
     Calculate the predictions of a given input set.
 
     Parameters
@@ -49,7 +50,7 @@ def calculate_predictions(models, input_set):
     prediction : ndarray
         The predictions for each model.
 
-    '''
+    """
     prediction = np.zeros((len(models), ) + input_set[1].shape)  # preallocate
     for i, model in enumerate(models):
         # index 0 means the case parameters
@@ -59,7 +60,7 @@ def calculate_predictions(models, input_set):
 
 
 def de_normalize(data, min_val=-30, max_val=0):
-    '''
+    """
     Denormalizes data so that the have values in range [min_val, max_val]
 
     Parameters
@@ -76,13 +77,13 @@ def de_normalize(data, min_val=-30, max_val=0):
     ndarray
         The denormalized data.
 
-    '''
+    """
     return min_val + (max_val - min_val) * data
 
 
 def de_normalize2(y, min_val=-30, max_val=0):
     m, n = y.shape
-    y_d = np.zeros((m, n-1))
+    y_d = np.zeros((m, n - 1))
     for i in range(m):
         max_el = y[i, -1] * min_val
         y_d[i] = y[i, :-1] * (np.abs(min_val) + max_el) - np.abs(min_val)
@@ -223,7 +224,7 @@ def log_gamma_range(gamma, radius, bfield,
                     q=const.e.esu.value,
                     m=const.m_e.cgs.value,
                     c=const.c.cgs.value):
-    '''
+    """
     Function that calculates the range of the geext values given a gamma value
 
     Parameters
@@ -239,7 +240,7 @@ def log_gamma_range(gamma, radius, bfield,
     -------
     Tuple
         The gamma geextmx range
-    '''
+    """
     if hasattr(gamma, '__len__'):
         v_min = 2 + gamma
         logc = np.ones(gamma.shape) * np.log(q / (m * c**2)) / np.log(base)
@@ -258,7 +259,7 @@ def log_gamma_range(gamma, radius, bfield,
 
 
 def normalize_clip(data, min_val=-30, max_val=0):
-    '''
+    """
     Clips and normalizes data so that the have values in range [0, 1]
 
     Parameters
@@ -275,7 +276,7 @@ def normalize_clip(data, min_val=-30, max_val=0):
     ndarray
         The normalized data.
 
-    '''
+    """
     clipped = np.clip(data, min_val, max_val)
     return (clipped - min_val) / (max_val - min_val)
 
@@ -286,13 +287,13 @@ def normalize_clip2(y, min_val=-30, max_val=0):
     y_n = np.zeros((m, n + 1))
     for i in range(m):
         max_el = np.amax(clipped[i])
-        yn = (clipped[i] + np.abs(min_val) ) /(np.abs(min_val) + max_el)
-        y_n[i] = np.append(yn, max_el/min_val)
+        yn = (clipped[i] + np.abs(min_val)) / (np.abs(min_val) + max_el)
+        y_n[i] = np.append(yn, max_el / min_val)
     return y_n
 
 
 def split_valid(x_train_full, y_train_full, ratio=0.2):
-    '''
+    """
     Splits a full training set and returns a validation set and a training set
 
     Parameters
@@ -309,12 +310,42 @@ def split_valid(x_train_full, y_train_full, ratio=0.2):
     Tuple of tuples of np.array
         The validation set and the training set.
 
-    '''
+    """
     n = int(len(x_train_full) * ratio)
 
     x_valid, x_train = x_train_full[:n], x_train_full[n:]
     y_valid, y_train = y_train_full[:n], y_train_full[n:]
     return (x_valid, y_valid), (x_train, y_train)
+
+
+def check_environment(config):
+    """Updates the config path variable, if it has the special
+    value ENV_VARIABLE_PLACEHOLDER. If it does, it uses the
+    resolved 'HEA_DATASET_PATH' environment variable as path.
+
+    Args:
+        config (dict): Dictionary representation of the config file.
+
+    Raises:
+        ValueError: if path equals 'ENV_VARIABLE_PLACEHOLDER'
+        and 'HEA_DATASET_PATH' is not set or the resolved
+        environment variable does not exist.
+
+    Returns:
+        dict: The updated config
+    """
+    if config['dataset']['path'] == 'ENV_VARIABLE_PLACEHOLDER':
+        env_var_value = os.getenv('HEA_DATASET_PATH')
+        if env_var_value:
+            if os.path.exists(env_var_value):
+                config['dataset']['path'] = env_var_value
+            else:
+                raise ValueError(
+                    f'HEA_DATASET_PATH={env_var_value} does not exist')
+        else:
+            raise ValueError(
+                f'Environment variable HEA_DATASET_PATH is not set!')
+    return config
 
 
 class Tuner(kt.HyperModel):
@@ -326,6 +357,7 @@ class Tuner(kt.HyperModel):
         self.neuron = hyper_params['neuron']
         self.hidden = hyper_params['hidden']
         self.lr = hyper_params['learning_rate']
+        self.batch = hyper_params['batch_size']
 
     def build(self, hp):
         # Number of neurons is a hyper parameter
@@ -341,6 +373,8 @@ class Tuner(kt.HyperModel):
         lr = hp.Float('learning_rate',
                       min_value=self.lr[0],
                       max_value=self.lr[1])
+        # Batch size is a hyper parameter
+        hp.Choice('batch_size', values=self.batch)
 
         model = self.build_func(self.features, self.labels, hidden, neurons)
 

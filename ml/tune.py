@@ -29,18 +29,14 @@ if __name__ == "__main__":
     with open(args.config) as config:
         config = json.loads(config.read())
 
-        if config['dataset']['path'] == 'ENV_VARIABLE_PLACEHOLDER':
-            env_var_value = os.getenv('HEA_DATASET_PATH')
-            if env_var_value:
-                if os.path.exists(env_var_value):
-                    config['dataset']['path'] = env_var_value
-                else:
-                    print(f'HEA_DATASET_PATH={env_var_value} does not exist')
-                    sys.exit(1)
-            else:
-                print('Environment variable HEA_DATASET_PATH is not set!')
-                sys.exit(1)
+        # Check config dictionary for environment replacement
+        try:
+            config = common.check_environment(config)
+        except ValueError as e:
+            print(f'{e}')
+            sys.exit(1)
 
+        # Read config dictionaries
         dataset = config['dataset']
         hyper_parameters = config['hyper_parameters']
         train_parameters = config['train_parameters']
@@ -102,24 +98,12 @@ if __name__ == "__main__":
         tuner.search_space_summary()
 
         if overwrite:
-            hp = kt.HyperParameters()
-            hp.Choice('batch_size', values=train_parameters['batch_size'])
             epochs = train_parameters['epochs']
             tuner.search(
                 train_full[0],
                 train_full[1],
-                batch_size=hp.get('batch_size'),
                 epochs=epochs,
                 validation_split=train_parameters['validation_ratio'],
-                callbacks=[
-                    tf.keras.callbacks.TensorBoard(
-                        log_dir=logs,
-                        update_freq='epoch',
-                        histogram_freq=0),
-                    tf.keras.callbacks.EarlyStopping(
-                        monitor='val_loss',
-                        patience=int(
-                            epochs / 10))],
                 use_multiprocessing=True)
         else:
             tuner.reload()
