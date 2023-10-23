@@ -79,7 +79,7 @@ while getopts "ht:m:a:c:" opt; do
     a) # Set the tune algorithm
       ALGORITHM=$OPTARG
       case $ALGORITHM in
-        "bayesian"|"grid"|"random")
+        "bayensian"|"grid"|"random")
           ;;
         *)
           echo "Unknown algorithm"
@@ -118,27 +118,21 @@ echo -n > output.txt
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 if [ -z "$ALGORITHM" ]; then
-    for alg in "bayensian" "grid" "random"
-    do
-		FILE=$(readlink -f "$MODE_PATH"/"$TYPE"/"$alg".json)
+    for alg in "bayensian" "grid" "random"; do
+        FILE=$(readlink -f "$MODE_PATH"/"$TYPE"/"$alg".json)
         if [ -f "$FILE" ]; then
             if ! run_python_script "$DIR/$MODE.py" "$FILE"; then
                 echo -e "\nFile $FILE did not run."
+                exit 1
             fi
-        else
-            echo "Path does not exist: $FILE"
-            exit 1
         fi
     done
 else
-	FILE=$(readlink -f "$MODE_PATH"/"$TYPE"/"$ALGORITHM".json)
+    FILE=$(readlink -f "$MODE_PATH"/"$TYPE"/"$ALGORITHM".json)
     if [ -f $FILE ]; then
-        run_python_script "$DIR/$MODE.py" "$FILE"
         if ! run_python_script "$DIR/$MODE.py" "$FILE"; then
             echo -e "\nFile $FILE did not run."
+            exit 1
         fi
-    else
-        echo "Path does not exist: $FILE"
-        exit 1
     fi
 fi
