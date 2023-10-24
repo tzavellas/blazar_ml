@@ -8,7 +8,7 @@
         "neuron" : [10, 128],
         "learning_rate" : [1e-5, 1e-2],
         "batch_size": [32, 64, 128, 256],
-        "tuner": "bayensian_optimization"
+        "tuner": "bayesian_optimization"
     },
     "train_parameters": {
         "architecture": "gru",
@@ -18,7 +18,7 @@
         "validation_ratio": 0.2
     },
     "paths" : {
-        "working_dir": "tune_gru_bayensian",
+        "working_dir": "tune_gru_bayesian",
         "logs": "logs",
         "report": "report.txt",
         "overwrite": true

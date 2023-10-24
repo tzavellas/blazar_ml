@@ -61,8 +61,6 @@ if __name__ == "__main__":
 
         hyper = {
             'dnn': common.Tuner(dnn.build_model, n_features, n_labels, hyper_parameters),
-            'avg': common.Tuner(dnn.build_model_avg, n_features, n_labels, hyper_parameters),
-            'concat': common.Tuner(dnn.build_model_concat, n_features, n_labels, hyper_parameters),
             'rnn': common.Tuner(rnn.build_simple_rnn, n_features, n_labels, hyper_parameters),
             'lstm': common.Tuner(rnn.build_lstm, n_features, n_labels, hyper_parameters),
             'gru': common.Tuner(rnn.build_gru, n_features, n_labels, hyper_parameters)
@@ -87,7 +85,7 @@ if __name__ == "__main__":
                                   directory=working_dir,
                                   project_name='trials',
                                   overwrite=overwrite)
-        elif hyper_parameters['tuner'] == 'bayensian_optimization':
+        elif hyper_parameters['tuner'] == 'bayesian_optimization':
             tuner = kt.BayesianOptimization(hypermodel,
                                             objective='val_loss',
                                             max_trials=samples,
