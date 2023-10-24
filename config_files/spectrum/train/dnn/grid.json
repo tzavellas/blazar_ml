@@ -7,15 +7,15 @@
         "architecture": "dnn",
         "name": "dnn_grid",
         "hidden": 4,
-        "neurons": 12,
+        "neurons": 10,
         "batch_size": 64,
-        "epochs": 200,
+        "epochs": 1200,
         "learning_rate": 0.0095005,
-        "test_ratio": 0.0,
-        "validation_ratio": 0.2
+        "test_ratio": 0.05,
+        "validation_ratio": 0.15
     },
     "paths": {
-        "working_dir": "dnn",
+        "working_dir": "dnn_grid",
         "output": "hea_dnn_grid.h5"
     }
 }

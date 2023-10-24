@@ -9,7 +9,7 @@
         "hidden": 3,
         "neurons": 128,
         "batch_size": 32,
-        "epochs": 500,
+        "epochs": 1200,
         "learning_rate": 0.0032134118227590104,
         "test_ratio": 0.05,
         "validation_ratio": 0.15
