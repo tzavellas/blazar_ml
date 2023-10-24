@@ -7,7 +7,7 @@ print_help() {
   echo "Options:"
   echo "  -m    specify the mode (tune, train)"
   echo "  -t    specify the NN type (dnn, rnn, gru, lstm)"
-  echo "  -a    specify tune algorithm (bayensian, grid, random)"
+  echo "  -a    specify tune algorithm (bayesian, grid, random)"
   echo "  -c    specify configuration path (default ../config_files/spectrum)"
   echo "  -h    display this help message and exit"
 }
@@ -79,7 +79,7 @@ while getopts "ht:m:a:c:" opt; do
     a) # Set the tune algorithm
       ALGORITHM=$OPTARG
       case $ALGORITHM in
-        "bayensian"|"grid"|"random")
+        "bayesian"|"grid"|"random")
           ;;
         *)
           echo "Unknown algorithm"
@@ -118,7 +118,7 @@ echo -n > output.txt
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 if [ -z "$ALGORITHM" ]; then
-    for alg in "bayensian" "grid" "random"; do
+    for alg in "bayesian" "grid" "random"; do
         FILE=$(readlink -f "$MODE_PATH"/"$TYPE"/"$alg".json)
         if [ -f "$FILE" ]; then
             if ! run_python_script "$DIR/$MODE.py" "$FILE"; then
