@@ -9,10 +9,10 @@
         "hidden": 3,
         "neurons": 128,
         "batch_size": 32,
-        "epochs": 250,
+        "epochs": 500,
         "learning_rate": 0.0032134118227590104,
-        "test_ratio": 0.0,
-        "validation_ratio": 0.2
+        "test_ratio": 0.05,
+        "validation_ratio": 0.15
     },
     "paths": {
         "working_dir": "dnn_bayesian",

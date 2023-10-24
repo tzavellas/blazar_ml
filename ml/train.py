@@ -72,8 +72,6 @@ if __name__ == "__main__":
         # Build all types of models
         models = {
             'dnn': dnn.build_model(n_features, n_labels, hidden, neurons, name),
-            'avg': dnn.build_model_avg(n_features, n_labels, hidden, neurons, base, name),
-            'concat': dnn.build_model_concat(n_features, n_labels, hidden, neurons, base, name),
             'rnn': rnn.build_simple_rnn(n_features, n_labels, hidden, neurons, name),
             'lstm': rnn.build_lstm(n_features, n_labels, hidden, neurons, name),
             'gru': rnn.build_gru(n_features, n_labels, hidden, neurons, name)
