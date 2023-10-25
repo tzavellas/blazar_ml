@@ -1,0 +1,20 @@
+{
+    "dataset":{
+        "path": "ENV_VARIABLE_PLACEHOLDER",
+        "inputs": 6
+    },
+    "label": "gru",
+    "metric": "kolmogorov_smirnov",
+    "plot_options":{
+        "rankings": true,
+        "title": "GRU ranking bar plot"
+    },
+    "paths" : {
+        "models": [ 
+            "/home/tzavellas/thesis/hea_ml_project/ml/gru_bayesian/gru_bayesian.h5",
+            "/home/tzavellas/thesis/hea_ml_project/ml/gru_grid/gru_grid.h5",
+            "/home/tzavellas/thesis/hea_ml_project/ml/gru_random/gru_random.h5"
+        ],
+        "working_dir": "evaluation"
+    }
+}

@@ -15,7 +15,6 @@
         "validation_ratio": 0.15
     },
     "paths": {
-        "working_dir": "dnn_grid",
-        "output": "hea_dnn_grid.h5"
+        "working_dir": "dnn_grid"
     }
 }

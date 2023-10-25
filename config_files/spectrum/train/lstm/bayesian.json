@@ -5,17 +5,16 @@
     },
     "train_parameters": {
         "architecture": "lstm",
-        "name": "lstm_bayes",
+        "name": "lstm_bayesian",
         "hidden": 2,
         "neurons": 40,
         "batch_size": 64,
         "epochs": 250,
         "learning_rate": 0.009605246254150412,
-        "test_ratio": 0.0,
-        "validation_ratio": 0.2
+        "test_ratio": 0.05,
+        "validation_ratio": 0.15
     },
     "paths": {
-        "working_dir": "lstm",
-        "output": "hea_lstm_bayes.h5"
+        "working_dir": "lstm_bayesian"
     }
 }

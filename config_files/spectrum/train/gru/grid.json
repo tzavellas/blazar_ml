@@ -7,15 +7,14 @@
         "architecture": "gru",
         "name": "gru_grid",
         "hidden": 1,
-        "neurons": 13,
+        "neurons": 11,
         "batch_size": 64,
-        "epochs": 200,
-        "learning_rate": 0.0095005,
+        "epochs": 600,
+        "learning_rate": 0.0045055,
         "test_ratio": 0.0,
         "validation_ratio": 0.2
     },
     "paths": {
-        "working_dir": "gru",
-        "output": "hea_gru_grid.h5"
+        "working_dir": "gru_grid"
     }
 }

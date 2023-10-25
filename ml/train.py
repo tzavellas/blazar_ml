@@ -67,7 +67,7 @@ if __name__ == "__main__":
         hidden = train_parameters['hidden']
         neurons = train_parameters['neurons']
         base = train_parameters.get('base', 2)
-        name = train_parameters.get('name', None)
+        name = train_parameters['name']
 
         # Build all types of models
         models = {
@@ -103,6 +103,6 @@ if __name__ == "__main__":
         print(f'MSE test: {mse_test}')
 
         # Save the model
-        save_path = os.path.join(working_dir, paths['output'])
+        save_path = os.path.join(working_dir, f'{name}.h5')
         print(f'Saving model at: {save_path}')
         model.save(save_path)

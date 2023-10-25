@@ -5,7 +5,7 @@
     },
     "train_parameters": {
         "architecture": "dnn",
-        "name": "dnn_bayes",
+        "name": "dnn_bayesian",
         "hidden": 3,
         "neurons": 128,
         "batch_size": 32,
@@ -15,7 +15,6 @@
         "validation_ratio": 0.15
     },
     "paths": {
-        "working_dir": "dnn_bayesian",
-        "output": "hea_dnn_bayes.h5"
+        "working_dir": "dnn_bayesian"
     }
 }

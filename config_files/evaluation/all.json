@@ -1,0 +1,20 @@
+{
+    "dataset":{
+        "path": "ENV_VARIABLE_PLACEHOLDER",
+        "inputs": 6
+    },
+    "label": "dnn",
+    "metric": "kolmogorov_smirnov",
+    "plot_options":{
+        "rankings": true,
+        "title": "Final ranking bar plot"
+    },
+    "paths" : {
+        "models": [ 
+            "/home/tzavellas/thesis/hea_ml_project/ml/dnn_bayesian/hea_dnn_bayes.h5",
+            "/home/tzavellas/thesis/hea_ml_project/ml/dnn_grid/hea_dnn_grid.h5",
+            "/home/tzavellas/thesis/hea_ml_project/ml/dnn_random/hea_dnn_random.h5"
+        ],
+        "working_dir": "evaluation"
+    }
+}
