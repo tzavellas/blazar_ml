@@ -11,23 +11,85 @@ import tensorflow as tf
 from astropy import constants as const
 
 
-def average_ranking(error, model_ids):
-    """ Calculates the mean value and std of the error per model.
-    Returns a ranking, a list of ids sorted by the ranking and
-    a list of statistics (mean, std) sorted by the ranking.
+class ModelErrorAnalyzer:
+    def __init__(self, error, model_ids):
+        self.error = error
+        self.m_id = np.array(model_ids)
 
-    Args:
-        error (nd.array): An [num_models x num_cases] matrix with the error metric.
-        model_ids (list): List of model ids.
+    @staticmethod
+    def average_ranking(error, model_ids):
+        """ Calculates the mean value and std of the error per model.
+        Returns a ranking of the mean value, a list of ids sorted by the ranking and
+        a list of statistics (mean, std) sorted by the ranking.
 
-    Returns:
-        tuple(list, list, list): The ranking, the ranked ids, and the ranked statistics.
-    """
-    m_id = np.array(model_ids)
-    mm = np.mean(error, axis=1)
-    ss = np.std(error, axis=1)
-    argsort = np.argsort(mm)
-    return argsort, m_id[argsort].tolist(), list(zip(mm[argsort], ss[argsort]))
+        Args:
+            error (nd.array): An [num_models x num_cases] matrix with the error metric.
+            model_ids (list): List of model ids.
+
+        Returns:
+            tuple(list, list, list): The ranking, the ranked ids, and the ranked statistics.
+        """
+        mm = np.mean(error, axis=1)
+        ss = np.std(error, axis=1)
+        argsort = np.argsort(mm)
+        return argsort, model_ids[argsort].tolist(), list(
+            zip(mm[argsort], ss[argsort]))
+
+    @staticmethod
+    def median_ranking(error, model_ids):
+        """Calculates the median of the error per model. Returns a
+        ranking of the median and a list of ids sorted by the ranking.
+
+        Args:
+            error (nd.array): An [num_models x num_cases] matrix with the error metric.
+            model_ids (list): List of model ids.
+
+        Returns:
+            tuple(list, list): The ranking, the ranked ids
+        """
+        mm = np.median(error, axis=1)
+        argsort = np.argsort(mm)
+        return argsort, model_ids[argsort].tolist()
+
+    @staticmethod
+    def min_error_ranking(error, model_ids):
+        mm = np.min(error, axis=1)
+        argsort = np.argsort(mm)
+        return argsort, model_ids[argsort].tolist()
+
+    @staticmethod
+    def max_error_ranking(error, model_ids):
+        mm = np.max(error, axis=1)
+        argsort = np.argsort(mm)
+        return argsort, model_ids[argsort].tolist()
+
+    @staticmethod
+    def bin_counts(error):
+        argsort = np.argsort(error.transpose())
+        m = argsort.shape[0]
+        n = argsort.shape[1]
+
+        counts = np.zeros((n, n))
+        for col in range(n):
+            data = argsort[:, col]
+            count = np.bincount(data, minlength=n)
+            counts[:, col] = count
+        return counts
+
+    def average_algorithm(self):
+        return self.average_ranking(self.error, self.m_id)
+
+    def counts(self):
+        return self.bin_counts(self.error)
+
+    def median_algorithm(self):
+        return self.median_ranking(self.error, self.m_id)
+
+    def min_algorithm(self):
+        return self.min_error_ranking(self.error, self.m_id)
+
+    def max_algorithm(self):
+        return self.max_error_ranking(self.error, self.m_id)
 
 
 def is_double_stochastic(matrix):
@@ -433,19 +495,23 @@ if __name__ == "__main__":
 
         error_metric = common.calculate_error(input_set[1], prediction, choice)
 
-        stats_ranking, stats_ids, stats = average_ranking(
-            error_metric, model_names)
+        analyzer = ModelErrorAnalyzer(error_metric, model_names)
 
-        aggr_ranking, aggr_ids, counts = page_ranking(
-            error_metric, model_names)
-
-        report = os.path.join(working_dir, f'{label}_report.txt')
+        metric_ = config.get('metric', 'kolmogorov_smirnov')
+        basename = f'{label}_{metric_}'
+        report = os.path.join(working_dir, f'{basename}_report.txt')
         with open(report, 'w') as f:
-            metric_ = config.get('metric', 'kolmogorov_smirnov')
             f.write(f'Metric: {metric_}\n\n')
+            stats_ranking, stats_ids, stats = analyzer.average_algorithm()
             f.write(f'Average Ranking: {stats_ids} ({stats_ranking})\n')
-            f.write(f'Page Ranking: {aggr_ids} ({aggr_ranking})\n')
+            med_ranking, med_ids = analyzer.median_algorithm()
+            f.write(f'Median Ranking: {med_ids} ({med_ranking})\n')
+            max_ranking, max_ids = analyzer.max_algorithm()
+            f.write(f'Max Ranking: {max_ids} ({max_ranking})\n')
+            min_ranking, min_ids = analyzer.min_algorithm()
+            f.write(f'Min Ranking: {min_ids} ({min_ranking})\n')
 
         if plot_options['rankings']:
-            plot_file = os.path.join(working_dir, f'{label}_barchart.svg')
+            plot_file = os.path.join(working_dir, f'{basename}_barchart.svg')
+            counts = analyzer.counts()
             plot_barchart(counts, plot_options['title'], plot_file)

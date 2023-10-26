@@ -7,10 +7,10 @@
         "architecture": "gru",
         "name": "gru_random",
         "hidden": 1,
-        "neurons": 127,
+        "neurons": 120,
         "batch_size": 64,
-        "epochs": 3000,
-        "learning_rate": 0.007609819189817604,
+        "epochs": 330,
+        "learning_rate": 0.0030837883281960494,
         "test_ratio": 0.05,
         "validation_ratio": 0.15
     },

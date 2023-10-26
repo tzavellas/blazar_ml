@@ -11,8 +11,8 @@
         "batch_size": 64,
         "epochs": 600,
         "learning_rate": 0.0045055,
-        "test_ratio": 0.0,
-        "validation_ratio": 0.2
+        "test_ratio": 0.05,
+        "validation_ratio": 0.15
     },
     "paths": {
         "working_dir": "gru_grid"

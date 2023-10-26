@@ -99,8 +99,9 @@ if __name__ == "__main__":
                                        # tf.keras.callbacks.LearningRateScheduler(common.scheduler)
                                        ])
         # Evaluate the model
-        mse_test = model.evaluate(*test)
-        print(f'MSE test: {mse_test}')
+        if test_ratio > 0:
+            mse_test = model.evaluate(*test)
+            print(f'MSE test: {mse_test}')
 
         # Save the model
         save_path = os.path.join(working_dir, f'{name}.h5')
