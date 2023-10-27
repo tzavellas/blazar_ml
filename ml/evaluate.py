@@ -9,12 +9,31 @@ import sys
 from sklearn import metrics
 import tensorflow as tf
 from astropy import constants as const
+from scipy.optimize import linear_sum_assignment
 
 
 class ModelErrorAnalyzer:
     def __init__(self, error, model_ids):
         self.error = error
         self.m_id = np.array(model_ids)
+
+    @staticmethod
+    def is_double_stochastic(matrix):
+        """Checks if a matrix is double stochastic
+
+        Args:
+            matrix (nd.array): The matrix
+
+        Returns:
+            bool: True if it is double stochastic
+        """
+        return np.allclose(
+            matrix.sum(
+                axis=0),
+            1) and np.allclose(
+            matrix.sum(
+                axis=1),
+            1)
 
     @staticmethod
     def average_ranking(error, model_ids):
@@ -34,6 +53,56 @@ class ModelErrorAnalyzer:
         argsort = np.argsort(mm)
         return argsort, model_ids[argsort].tolist(), list(
             zip(mm[argsort], ss[argsort]))
+
+    @staticmethod
+    def birkhoff_von_neumann_decomposition(matrix):
+        """Performs Birkhoff-Von Neumann decomposition
+
+        Args:
+            matrix (nd.array): A double stochastic matrix
+
+        Returns:
+            tuple(list, list): A list of permutation matrices and their corresponding weights.
+        """
+        assert ModelErrorAnalyzer.is_double_stochastic(
+            matrix), "Matrix is not double stochastic"
+
+        n = matrix.shape[0]
+        permutation_matrices = []
+        weights = []
+        while not np.allclose(matrix, 0):
+            r, c = linear_sum_assignment(-matrix)
+            P = np.zeros_like(matrix)
+            P[r, c] = 1
+
+            weight = np.min(matrix[r, c])
+            weights.append(weight)
+            permutation_matrices.append(P)
+
+            matrix = matrix - weight * P
+        return permutation_matrices, weights
+
+    @staticmethod
+    def most_representative_ranking(error, model_ids):
+        """Runs the Most Representative Ranking algorithm.
+        Returns a ranking and a list of ids sorted by the ranking.
+
+        Args:
+            error (nd.array): An [num_models x num_cases] matrix with the error metric.
+            model_ids (list): List of model ids.
+
+        Returns:
+            tuple(list, list, list): The ranking, the ranked ids and the counts matrix.
+        """
+        counts, m = ModelErrorAnalyzer.bin_counts(error)
+        mat = counts / m
+        permutation_matrices, weights = ModelErrorAnalyzer.birkhoff_von_neumann_decomposition(
+            mat)
+        max_weight_index = np.argmax(weights)
+        choice = permutation_matrices[max_weight_index]
+
+        ranking = np.argmax(choice, axis=1)
+        return ranking, model_ids[ranking].tolist()
 
     @staticmethod
     def median_ranking(error, model_ids):
@@ -74,13 +143,16 @@ class ModelErrorAnalyzer:
             data = argsort[:, col]
             count = np.bincount(data, minlength=n)
             counts[:, col] = count
-        return counts
+        return counts, m
 
     def average_algorithm(self):
         return self.average_ranking(self.error, self.m_id)
 
+    def bv_algorithm(self):
+        return self.most_representative_ranking(self.error, self.m_id)
+
     def counts(self):
-        return self.bin_counts(self.error)
+        return self.bin_counts(self.error)[0]
 
     def median_algorithm(self):
         return self.median_ranking(self.error, self.m_id)
@@ -90,60 +162,6 @@ class ModelErrorAnalyzer:
 
     def max_algorithm(self):
         return self.max_error_ranking(self.error, self.m_id)
-
-
-def is_double_stochastic(matrix):
-    """Checks if a matrix is double stochastic
-
-    Args:
-        matrix (nd.array): The matrix
-
-    Returns:
-        bool: True if it is double stochastic
-    """
-    if not (matrix >= 0).all():
-        return False
-    if not np.allclose(matrix.sum(axis=1), 1):
-        return False
-    if not np.allclose(matrix.sum(axis=0), 1):
-        return False
-    return True
-
-
-def page_ranking(error, model_ids):
-    """Runs the Rank Aggregation algorithm.
-    Returns a ranking, a list of ids sorted by the ranking and
-    a list of statistics (mean, std) sorted by the ranking.
-
-    Args:
-        error (nd.array): An [num_models x num_cases] matrix with the error metric.
-        model_ids (list): List of model ids.
-
-    Returns:
-        tuple(list, list, list): The ranking, the ranked ids and the counts matrix.
-    """
-    argsort = np.argsort(error.transpose())
-    m = argsort.shape[0]
-    n = argsort.shape[1]
-
-    counts = np.zeros((n, n))
-    for col in range(n):
-        data = argsort[:, col]
-        count = np.bincount(data, minlength=len(model_ids))
-        counts[:, col] = count
-    mat = counts / m
-
-    ranking = None
-    ids = None
-    if is_double_stochastic(mat):
-        eig_val, eig_vec = np.linalg.eig(mat)
-        index = np.where(np.isclose(eig_val, 1))[0][0]
-        scores = np.abs(eig_vec[:, index])
-        scores = scores / scores.sum()
-        ranking = np.argsort(scores)[::-1]
-        m_id = np.array(model_ids)
-        ids = m_id[ranking].tolist()
-    return ranking, ids, counts
 
 
 def plot_barchart(counts, title, plot_file=None):
@@ -504,6 +522,8 @@ if __name__ == "__main__":
             f.write(f'Metric: {metric_}\n\n')
             stats_ranking, stats_ids, stats = analyzer.average_algorithm()
             f.write(f'Average Ranking: {stats_ids} ({stats_ranking})\n')
+            bv_ranking, bv_ids = analyzer.bv_algorithm()
+            f.write(f'Birkhoff-Von Neumann Ranking: {bv_ids} ({bv_ranking})\n')
             med_ranking, med_ids = analyzer.median_algorithm()
             f.write(f'Median Ranking: {med_ids} ({med_ranking})\n')
             max_ranking, max_ids = analyzer.max_algorithm()
