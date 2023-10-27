@@ -164,7 +164,7 @@ class ModelErrorAnalyzer:
         return self.max_error_ranking(self.error, self.m_id)
 
 
-def plot_barchart(counts, title, plot_file=None):
+def plot_barchart(counts, plot_file=None, title=None):
     n = counts.shape[1]
     fig, ax = plt.subplots()
     bar_width = 0.25
@@ -174,7 +174,8 @@ def plot_barchart(counts, title, plot_file=None):
                width=bar_width, label=model_names[col])
     ax.set_xticks(r + bar_width)
     ax.set_xticklabels([1, 2, 3])
-    ax.set_title(title)
+    if title:
+        ax.set_title(title)
     ax.set_xlabel('Ranking')
     ax.set_ylabel('Frequency')
     ax.legend()
@@ -534,4 +535,4 @@ if __name__ == "__main__":
         if plot_options['rankings']:
             plot_file = os.path.join(working_dir, f'{basename}_barchart.svg')
             counts = analyzer.counts()
-            plot_barchart(counts, plot_options['title'], plot_file)
+            plot_barchart(counts, plot_file)
