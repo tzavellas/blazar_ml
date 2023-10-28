@@ -100,6 +100,7 @@ if __name__ == "__main__":
             tuner.search(
                 train_full[0],
                 train_full[1],
+                verbose=2,
                 epochs=epochs,
                 validation_split=train_parameters['validation_ratio'],
                 use_multiprocessing=True)

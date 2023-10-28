@@ -6,11 +6,11 @@
     "train_parameters": {
         "architecture": "lstm",
         "name": "lstm_random",
-        "hidden": 2,
-        "neurons": 80,
+        "hidden": 1,
+        "neurons": 54,
         "batch_size": 64,
-        "epochs": 200,
-        "learning_rate": 0.009676896873869648,
+        "epochs": 240,
+        "learning_rate": 0.004893616038638203,
         "test_ratio": 0.05,
         "validation_ratio": 0.15
     },

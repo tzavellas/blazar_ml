@@ -11,9 +11,9 @@
     },
     "paths" : {
         "models": [ 
-            "/home/tzavellas/thesis/hea_ml_project/ml/dnn_bayesian/hea_dnn_bayes.h5",
-            "/home/tzavellas/thesis/hea_ml_project/ml/dnn_grid/hea_dnn_grid.h5",
-            "/home/tzavellas/thesis/hea_ml_project/ml/dnn_random/hea_dnn_random.h5"
+            "/home/tzavellas/thesis/hea_ml_project/ml/dnn_grid/dnn_grid.h5",
+            "/home/tzavellas/thesis/hea_ml_project/ml/gru_bayesian/gru_bayesian.h5",
+            "/home/tzavellas/thesis/hea_ml_project/ml/lstm_random/lstm_random.h5"
         ],
         "working_dir": "evaluation"
     }

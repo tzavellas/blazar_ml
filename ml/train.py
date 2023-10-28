@@ -76,34 +76,39 @@ if __name__ == "__main__":
             'lstm': rnn.build_lstm(n_features, n_labels, hidden, neurons, name),
             'gru': rnn.build_gru(n_features, n_labels, hidden, neurons, name)
         }
-
-        # Choose a type and compile it
-        model = models[train_parameters['architecture']]
-        model.compile(
-            optimizer=tf.keras.optimizers.Adam(
-                learning_rate=train_parameters['learning_rate']),
-            loss=tf.keras.losses.MeanSquaredLogarithmicError(),
-            metrics=tf.keras.metrics.MeanSquaredError())
-        model.summary()
-
+        # Initialize paths
         logs = os.path.join(working_dir, f'logs_{name}')
         backup = os.path.join(working_dir, f'backup_{name}')
-        # Train the model
-        history = model.fit(train_full[0], train_full[1],
-                            epochs=train_parameters['epochs'],
-                            batch_size=train_parameters['batch_size'],
-                            validation_split=train_parameters['validation_ratio'],
-                            callbacks=[tf.keras.callbacks.TensorBoard(logs),
-                                       tf.keras.callbacks.BackupAndRestore(
-                                           backup),
-                                       # tf.keras.callbacks.LearningRateScheduler(common.scheduler)
-                                       ])
+        save_path = os.path.join(working_dir, f'{name}.h5')
+
+        if not os.path.exists(save_path):
+            # Choose a type and compile it
+            model = models[train_parameters['architecture']]
+            model.compile(
+                optimizer=tf.keras.optimizers.Adam(
+                    learning_rate=train_parameters['learning_rate']),
+                loss=tf.keras.losses.MeanSquaredLogarithmicError(),
+                metrics=tf.keras.metrics.MeanSquaredError())
+            model.summary()
+            # Train the model
+            history = model.fit(train_full[0], train_full[1],
+                                verbose=2,
+                                epochs=train_parameters['epochs'],
+                                batch_size=train_parameters['batch_size'],
+                                validation_split=train_parameters['validation_ratio'],
+                                callbacks=[tf.keras.callbacks.TensorBoard(logs),
+                                        tf.keras.callbacks.BackupAndRestore(
+                                            backup),
+                                        # tf.keras.callbacks.LearningRateScheduler(common.scheduler)
+                                        ])
+            # Save the model
+            print(f'Saving model at: {save_path}')
+            model.save(save_path)
+        else:
+            model = tf.keras.models.load_model(save_path)
         # Evaluate the model
         if test_ratio > 0:
-            mse_test = model.evaluate(*test)
-            print(f'MSE test: {mse_test}')
-
-        # Save the model
-        save_path = os.path.join(working_dir, f'{name}.h5')
-        print(f'Saving model at: {save_path}')
-        model.save(save_path)
+            eval = model.evaluate(*test)
+            print('\nEvaluation')
+            for i in range(len(eval)):
+                print(f'{model.metrics_names[i]}={eval[i]}')
