@@ -15,6 +15,8 @@
         "validation_ratio": 0.15
     },
     "paths": {
-        "working_dir": "dnn_random"
+        "working_dir": "dnn_random",
+        "report": true,
+        "overwrite": true
     }
 }

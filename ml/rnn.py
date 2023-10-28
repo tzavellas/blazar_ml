@@ -69,6 +69,6 @@ def build_gru(n_features, n_labels, n_hidden, n_neurons, name=None):
     model.add(
         tf.keras.layers.Dense(
             output_shape,
-            activation='elu'))
+            activation=tf.keras.layers.LeakyReLU(0.2)))
 
     return model

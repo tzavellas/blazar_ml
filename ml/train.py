@@ -3,6 +3,7 @@ import common
 import json
 import numpy as np
 import os
+import shutil
 import sys
 import tensorflow as tf
 import dnn
@@ -66,22 +67,25 @@ if __name__ == "__main__":
         # Read dataset configuration
         hidden = train_parameters['hidden']
         neurons = train_parameters['neurons']
-        base = train_parameters.get('base', 2)
         name = train_parameters['name']
 
         # Build all types of models
         models = {
-            'dnn': dnn.build_model(n_features, n_labels, hidden, neurons, name),
-            'rnn': rnn.build_simple_rnn(n_features, n_labels, hidden, neurons, name),
-            'lstm': rnn.build_lstm(n_features, n_labels, hidden, neurons, name),
-            'gru': rnn.build_gru(n_features, n_labels, hidden, neurons, name)
-        }
+            'dnn': dnn.build_model(
+                n_features, n_labels, hidden, neurons, name), 'rnn': rnn.build_simple_rnn(
+                n_features, n_labels, hidden, neurons, name), 'lstm': rnn.build_lstm(
+                n_features, n_labels, hidden, neurons, name), 'gru': rnn.build_gru(
+                    n_features, n_labels, hidden, neurons, name)}
         # Initialize paths
         logs = os.path.join(working_dir, f'logs_{name}')
         backup = os.path.join(working_dir, f'backup_{name}')
         save_path = os.path.join(working_dir, f'{name}.h5')
 
-        if not os.path.exists(save_path):
+        if os.path.exists(save_path) and (not paths['overwrite']):
+            model = tf.keras.models.load_model(save_path)
+        else:
+            if os.path.exists(save_path):
+                shutil.copy2(save_path, f'{save_path}.old')
             # Choose a type and compile it
             model = models[train_parameters['architecture']]
             model.compile(
@@ -97,18 +101,23 @@ if __name__ == "__main__":
                                 batch_size=train_parameters['batch_size'],
                                 validation_split=train_parameters['validation_ratio'],
                                 callbacks=[tf.keras.callbacks.TensorBoard(logs),
-                                        tf.keras.callbacks.BackupAndRestore(
-                                            backup),
-                                        # tf.keras.callbacks.LearningRateScheduler(common.scheduler)
-                                        ])
+                                           tf.keras.callbacks.BackupAndRestore(
+                                    backup),
+                # tf.keras.callbacks.LearningRateScheduler(common.scheduler)
+            ])
             # Save the model
             print(f'Saving model at: {save_path}')
             model.save(save_path)
-        else:
-            model = tf.keras.models.load_model(save_path)
+
         # Evaluate the model
         if test_ratio > 0:
             eval = model.evaluate(*test)
             print('\nEvaluation')
             for i in range(len(eval)):
                 print(f'{model.metrics_names[i]}={eval[i]}')
+
+            if paths.get('report', True):
+                with open(f'report_{name}.txt', 'w') as f:
+                    f.write('Evaluation\n')
+                    for i in range(len(eval)):
+                        f.write(f'{model.metrics_names[i]}={eval[i]}\n')
