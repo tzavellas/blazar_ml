@@ -15,7 +15,7 @@ class Interpolator:
 
     @staticmethod
     def interpolate_spectra(working_dir, x_start=-15,
-                            x_end=10, num=500, k=1, clamped=None):
+                            x_end=10, num=500, k=1, clamping=True):
         '''
         Crawls working directory, reads each steady state and fits a spline.
             Parameters:
@@ -48,11 +48,10 @@ class Interpolator:
                                 'Reading {} for interpolation...'.format(main))
                             y_n = Interpolator.interpolate_spectrum(
                                 main, x_n, k)
-                            if clamped is None:
-                                interpolated_dict[s] = y_n
+                            if clamping:
+                                interpolated_dict[s] = clamp(y_n)
                             else:
-                                interpolated_dict[s] = clamp(
-                                    y_n, clamped['min'], clamped['max'])
+                                interpolated_dict[s] = y_n
                         except BaseException as e:
                             logger.error('Reading {}: {}'.format(main, e))
                             err = err + 1
