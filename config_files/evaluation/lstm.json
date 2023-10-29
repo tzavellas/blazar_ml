@@ -1,16 +1,16 @@
 {
-    "dataset":{
+    "dataset": {
         "path": "ENV_VARIABLE_PLACEHOLDER",
         "inputs": 6
     },
     "label": "LSTM",
     "metric": "kolmogorov_smirnov",
-    "plot_options":{
+    "plot_options": {
         "rankings": true,
         "title": "LSTM ranking bar plot"
     },
-    "paths" : {
-        "models": [ 
+    "paths": {
+        "models": [
             "/home/tzavellas/thesis/hea_ml_project/ml/lstm_bayesian/lstm_bayesian.h5",
             "/home/tzavellas/thesis/hea_ml_project/ml/lstm_grid/lstm_grid.h5",
             "/home/tzavellas/thesis/hea_ml_project/ml/lstm_random/lstm_random.h5"

@@ -8,7 +8,7 @@ import sys
 import timeit
 from code_launcher import CodeLauncher
 from dataset_creator import DatasetCreator
-from interpolator import Interpolator
+from interpolator import Interpolator, clamp
 from plotter import Plotter
 
 
@@ -132,7 +132,7 @@ if __name__ == "__main__":
                 logger.error('Error plotting aggregate spectrum')
                 sys.exit(1)
 
-        err, out_dict = Interpolator.interpolate_spectra(working_dir)
+        err, out_dict = Interpolator.interpolate_spectra(working_dir, clamped=clamp)
         interpolated_df = pd.DataFrame(out_dict)
 
         interpolated = paths.get('interpolated', None)
