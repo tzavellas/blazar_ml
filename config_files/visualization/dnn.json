@@ -3,14 +3,14 @@
         "path": "ENV_VARIABLE_PLACEHOLDER",
         "inputs": 6
     },
-    "label": "dnn",
-    "metric": "mse",
     "plot_options": {
+        "interactive": false,
         "all": true,
         "cases": [
+            0,
             10,
-            14,
-            15
+            20,
+            32
         ]
     },
     "paths": {
@@ -19,6 +19,6 @@
             "/home/tzavellas/thesis/hea_ml_project/ml/dnn_grid/dnn_grid.h5",
             "/home/tzavellas/thesis/hea_ml_project/ml/dnn_random/dnn_random.h5"
         ],
-        "working_dir": "evaluation"
+        "working_dir": "visualize/dnn"
     }
 }

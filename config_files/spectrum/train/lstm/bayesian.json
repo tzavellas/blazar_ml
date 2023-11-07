@@ -9,7 +9,7 @@
         "hidden": 1,
         "neurons": 69,
         "batch_size": 32,
-        "epochs": 120,
+        "epochs": 70,
         "learning_rate": 0.006989362551779529,
         "test_ratio": 0.05,
         "validation_ratio": 0.15
@@ -17,6 +17,6 @@
     "paths": {
         "working_dir": "lstm_bayesian",
         "report": true,
-        "overwrite": true
+        "on_exists": "overwrite"
     }
 }

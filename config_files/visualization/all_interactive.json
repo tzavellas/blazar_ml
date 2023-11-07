@@ -3,22 +3,22 @@
         "path": "ENV_VARIABLE_PLACEHOLDER",
         "inputs": 6
     },
-    "label": "dnn",
-    "metric": "mse",
     "plot_options": {
+        "interactive": true,
         "all": true,
         "cases": [
+            0,
             10,
-            14,
-            15
+            20,
+            32
         ]
     },
     "paths": {
         "models": [
             "/home/tzavellas/thesis/hea_ml_project/ml/dnn_bayesian/dnn_bayesian.h5",
-            "/home/tzavellas/thesis/hea_ml_project/ml/dnn_grid/dnn_grid.h5",
-            "/home/tzavellas/thesis/hea_ml_project/ml/dnn_random/dnn_random.h5"
+            "/home/tzavellas/thesis/hea_ml_project/ml/gru_grid/gru_grid.h5",
+            "/home/tzavellas/thesis/hea_ml_project/ml/lstm_bayesian/lstm_bayesian.h5"
         ],
-        "working_dir": "evaluation"
+        "working_dir": "visualize"
     }
 }

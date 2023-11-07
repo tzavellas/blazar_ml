@@ -9,7 +9,7 @@
         "hidden": 1,
         "neurons": 54,
         "batch_size": 64,
-        "epochs": 240,
+        "epochs": 120,
         "learning_rate": 0.004893616038638203,
         "test_ratio": 0.05,
         "validation_ratio": 0.15
@@ -17,6 +17,6 @@
     "paths": {
         "working_dir": "lstm_random",
         "report": true,
-        "overwrite": true
+        "on_exists": "overwrite"
     }
 }

@@ -4,10 +4,14 @@
         "inputs": 6
     },
     "label": "gru",
-    "metric": "kolmogorov_smirnov",
+    "metric": "mse",
     "plot_options": {
-        "rankings": true,
-        "title": "GRU ranking bar plot"
+        "all": true,
+        "cases": [
+            10,
+            14,
+            15
+        ]
     },
     "paths": {
         "models": [

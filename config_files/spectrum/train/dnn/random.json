@@ -9,7 +9,7 @@
         "hidden": 3,
         "neurons": 113,
         "batch_size": 128,
-        "epochs": 1800,
+        "epochs": 400,
         "learning_rate": 0.005905002899924993,
         "test_ratio": 0.05,
         "validation_ratio": 0.15
@@ -17,6 +17,6 @@
     "paths": {
         "working_dir": "dnn_random",
         "report": true,
-        "overwrite": true
+        "on_exists": "overwrite"
     }
 }
