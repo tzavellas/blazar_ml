@@ -163,15 +163,29 @@ class ModelErrorAnalyzer:
     def max_algorithm(self):
         return self.max_error_ranking(self.error, self.m_id)
 
+    def to_file(self, file, used_metric):
+        with open(file, 'w') as f:
+            f.write(f'Metric: {used_metric}\n\n')
+            bv_ranking, bv_ids = self.bv_algorithm()
+            f.write(f'Birkhoff-Von Neumann Ranking: {bv_ids} ({bv_ranking})\n')
+            stats_ranking, stats_ids, stats = self.average_algorithm()
+            f.write(f'Average Ranking: {stats_ids} ({stats_ranking})\n')
+            med_ranking, med_ids = self.median_algorithm()
+            f.write(f'Median Ranking: {med_ids} ({med_ranking})\n')
+            max_ranking, max_ids = self.max_algorithm()
+            f.write(f'Max Ranking: {max_ids} ({max_ranking})\n')
+            min_ranking, min_ids = self.min_algorithm()
+            f.write(f'Min Ranking: {min_ids} ({min_ranking})\n')
 
-def plot_barchart(counts, plot_file=None, title=None):
+
+def plot_barchart(counts, labels, plot_file=None, title=None):
     n = counts.shape[1]
     fig, ax = plt.subplots()
     bar_width = 0.25
     r = np.arange(counts.shape[0])
     for col in range(n):
         ax.bar(r + col * bar_width, counts[:, col],
-               width=bar_width, label=model_names[col])
+               width=bar_width, label=labels[col])
     ax.set_xticks(r + bar_width)
     ax.set_xticklabels([1, 2, 3])
     if title:
@@ -185,17 +199,15 @@ def plot_barchart(counts, plot_file=None, title=None):
         plt.close(fig)
 
 
-if __name__ == "__main__":
+def parse_arguments(argv):
     parser = argparse.ArgumentParser(
-        description='Loads a dataset and plots actual and predicted curves of each test case.')
+        description='Loads a dataset and several models and generates an evaluation report.')
     parser.add_argument('-c', '--config', type=str, required=True,
                         help='Config file.')
+    return parser.parse_args(argv)
 
-    try:
-        args = parser.parse_args()
-    except argparse.ArgumentError:
-        sys.exit(1)
 
+def main(args):
     with open(args.config) as config:
         config = json.loads(config.read())
 
@@ -220,13 +232,14 @@ if __name__ == "__main__":
         # test_set is _ because ratio is 0
         input_set, _ = common.load_data(dataset_path, n_features, 0.0)
 
-        metrics = {"dtw": dtw.distance,
-                   "integral": common.integral_error,
-                   "kolmogorov_smirnov": common.kolmogorov_smirnov_error,
-                   "mse": metrics.mean_squared_error,
-                   "msle": metrics.mean_squared_log_error}
+        available_metrics = {
+            "dtw": dtw.distance_fast,
+            "integral": common.integral_error,
+            "kolmogorov_smirnov": common.kolmogorov_smirnov_error,
+            "mse": metrics.mean_squared_error,
+            "msle": metrics.mean_squared_log_error}
 
-        choice = metrics[config.get('metric', 'kolmogorov_smirnov')]
+        choice = available_metrics[config.get('metric', 'kolmogorov_smirnov')]
 
         models = []
         model_names = []
@@ -238,28 +251,34 @@ if __name__ == "__main__":
         # Make predictions and denormalize the output
         prediction = common.calculate_predictions(models, input_set)
         y_pred = common.de_normalize(prediction)
+        y = input_set[1]
 
-        error_metric = common.calculate_error(input_set[1], y_pred, choice)
+        if not plot_options['all']:
+            if plot_options.get('cases', None):
+                indices = plot_options['cases']
+                y_pred = y_pred[:, indices, :]
+                y = y[indices, :]
+
+        error_metric = common.calculate_error(y, y_pred, choice)
 
         analyzer = ModelErrorAnalyzer(error_metric, model_names)
 
         metric_ = config.get('metric', 'kolmogorov_smirnov')
         basename = f'{label}_{metric_}'
-        report = os.path.join(working_dir, f'{basename}_report.txt')
-        with open(report, 'w') as f:
-            f.write(f'Metric: {metric_}\n\n')
-            stats_ranking, stats_ids, stats = analyzer.average_algorithm()
-            f.write(f'Average Ranking: {stats_ids} ({stats_ranking})\n')
-            bv_ranking, bv_ids = analyzer.bv_algorithm()
-            f.write(f'Birkhoff-Von Neumann Ranking: {bv_ids} ({bv_ranking})\n')
-            med_ranking, med_ids = analyzer.median_algorithm()
-            f.write(f'Median Ranking: {med_ids} ({med_ranking})\n')
-            max_ranking, max_ids = analyzer.max_algorithm()
-            f.write(f'Max Ranking: {max_ids} ({max_ranking})\n')
-            min_ranking, min_ids = analyzer.min_algorithm()
-            f.write(f'Min Ranking: {min_ids} ({min_ranking})\n')
 
-        if plot_options['rankings']:
-            plot_file = os.path.join(working_dir, f'{basename}_barchart.svg')
-            counts = analyzer.counts()
-            plot_barchart(counts, plot_file)
+        report = os.path.join(working_dir, f'{basename}_report.txt')
+        analyzer.to_file(report, metric_)
+
+        plot_file = os.path.join(working_dir, f'{basename}_barchart.svg')
+        counts = analyzer.counts()
+        plot_barchart(counts, model_names, plot_file)
+
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        args = parse_arguments(sys.argv[1:])
+        sys.exit(main(args))
+    except argparse.ArgumentError:
+        sys.exit(1)

@@ -26,11 +26,12 @@ def calculate_error(y, y_pred, err_func):
         The error metric.
 
     """
-    error_metric = np.zeros((len(y_pred), len(y)))
-    for i, y_i in enumerate(y):
-        for j, y_j in enumerate(y_pred):
-            error_metric[j][i] = err_func(y_i, y_j[i])
-
+    m = y_pred.shape[0]
+    n = y.shape[0]
+    error_metric = np.zeros((m, n))
+    for i in range(m):
+        for j in range(n):
+            error_metric[i, j] = err_func(y[j, :], y_pred[i, j, :])
     return error_metric
 
 

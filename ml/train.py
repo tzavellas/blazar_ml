@@ -10,21 +10,15 @@ import dnn
 import rnn
 
 
-if __name__ == "__main__":
-    filename = os.path.basename(__file__).split('.')[0]
-
+def parse_arguments(argv):
     parser = argparse.ArgumentParser(
-        description='Loads a dataset and trains a DNN.')
+        description='Loads a dataset and trains a Neural Net.')
     parser.add_argument('-c', '--config', type=str, required=True,
                         help='Config file.')
+    return parser.parse_args(argv)
 
-    try:
-        args = parser.parse_args()
-    except argparse.ArgumentError:
-        sys.exit(1)
 
-    np.set_printoptions(precision=4, suppress=True)
-
+def main(args):
     with open(args.config) as config:
         config = json.loads(config.read())
 
@@ -33,7 +27,7 @@ if __name__ == "__main__":
             config = common.check_environment(config)
         except ValueError as e:
             print(f'{e}')
-            sys.exit(1)
+            return 1
 
         # Read config dictionaries
         dataset = config['dataset']
@@ -54,7 +48,7 @@ if __name__ == "__main__":
                 dataset_path, n_features, test_ratio)  # returns train and test sets
         except Exception as e:
             print(f'Loading data: {e}')
-            sys.exit(1)
+            return 1
 
         # train_full[1] = common.normalize_clip2(train_full[1])
         # test[1] = common.normalize_clip2(test[1])
@@ -81,11 +75,15 @@ if __name__ == "__main__":
         backup = os.path.join(working_dir, f'backup_{name}')
         save_path = os.path.join(working_dir, f'{name}.h5')
 
-        if os.path.exists(save_path) and (not paths['overwrite']):
+        if os.path.exists(save_path) and (
+                paths.get('on_exists', None) is None):
             model = tf.keras.models.load_model(save_path)
         else:
             if os.path.exists(save_path):
                 shutil.copy2(save_path, f'{save_path}.old')
+            if paths.get('on_exists', 'overwrite') == 'overwrite':
+                shutil.rmtree(backup, ignore_errors=True)
+
             # Choose a type and compile it
             model = models[train_parameters['architecture']]
             model.compile(
@@ -95,16 +93,17 @@ if __name__ == "__main__":
                 metrics=tf.keras.metrics.MeanSquaredError())
             model.summary()
             # Train the model
-            history = model.fit(train_full[0], train_full[1],
-                                verbose=2,
-                                epochs=train_parameters['epochs'],
-                                batch_size=train_parameters['batch_size'],
-                                validation_split=train_parameters['validation_ratio'],
-                                callbacks=[tf.keras.callbacks.TensorBoard(logs),
-                                           tf.keras.callbacks.BackupAndRestore(
-                                    backup),
-                # tf.keras.callbacks.LearningRateScheduler(common.scheduler)
-            ])
+            history = model.fit(
+                train_full[0],
+                train_full[1],
+                verbose=2,
+                epochs=train_parameters['epochs'],
+                batch_size=train_parameters['batch_size'],
+                validation_split=train_parameters['validation_ratio'],
+                callbacks=[
+                    tf.keras.callbacks.TensorBoard(logs),
+                    tf.keras.callbacks.BackupAndRestore(backup),
+                ])
             # Save the model
             print(f'Saving model at: {save_path}')
             model.save(save_path)
@@ -117,7 +116,19 @@ if __name__ == "__main__":
                 print(f'{model.metrics_names[i]}={eval[i]}')
 
             if paths.get('report', True):
-                with open(f'report_{name}.txt', 'w') as f:
+                report = os.path.join(working_dir, f'report_{name}.txt')
+                with open(report, 'w') as f:
                     f.write('Evaluation\n')
                     for i in range(len(eval)):
                         f.write(f'{model.metrics_names[i]}={eval[i]}\n')
+
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        args = parse_arguments(sys.argv[1:])
+        ret = main(args)
+    except argparse.ArgumentError as e:
+        print(e)
+    sys.exit(ret)
