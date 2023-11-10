@@ -103,6 +103,7 @@ if __name__ == "__main__":
                 verbose=2,
                 epochs=epochs,
                 validation_split=train_parameters['validation_ratio'],
+                callbacks=[tf.keras.callbacks.TensorBoard(logs)],
                 use_multiprocessing=True)
         else:
             tuner.reload()

@@ -52,7 +52,8 @@ class SpectraPlotter:
             markersize=3)
         self.ax.set_ylabel('log(vFv) [arbitery units]')
         self.ax.set_xlabel('log(v) [Hz]')
-        # self.ax.set_ylim(ylim)
+        ymax = np.max(self.y[case_index])
+        self.ax.set_ylim([ymax-6,ymax+0.5])
 
     def plot_prediction_spectrum(self, case_index, model_index):
         self.ax.plot(

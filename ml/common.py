@@ -137,6 +137,29 @@ def kolmogorov_smirnov_error(y1, y2):
     return stat
 
 
+def r_squared(y_true, y_pred):
+    """
+    Calculates the R-squared value.
+
+    Parameters
+    ----------
+    y_true : ndarray
+        The true values
+    y_pred : ndarray
+        The predicted values.
+
+    Returns
+    -------
+    r2 : float
+        The r-squared value.
+
+    """
+    ssr = np.sum(np.square(y_true - y_pred))
+    sst = np.sum(np.square(y_true - np.mean(y_true)))
+    r2 = 1 - ssr/sst
+    return r2
+
+
 def scheduler(epoch, lr, rate=0.1):
     """
     Constant exponential decay schedule function with configurable rate. Keeps

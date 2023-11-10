@@ -97,7 +97,7 @@ class ModelErrorAnalyzer:
         counts, m = ModelErrorAnalyzer.bin_counts(error)
         mat = counts / m
         permutation_matrices, weights = ModelErrorAnalyzer.birkhoff_von_neumann_decomposition(
-            mat)
+            mat.transpose())
         max_weight_index = np.argmax(weights)
         choice = permutation_matrices[max_weight_index]
 
@@ -118,7 +118,7 @@ class ModelErrorAnalyzer:
         """
         mm = np.median(error, axis=1)
         argsort = np.argsort(mm)
-        return argsort, model_ids[argsort].tolist()
+        return argsort, model_ids[argsort].tolist(), mm[argsort]
 
     @staticmethod
     def min_error_ranking(error, model_ids):
@@ -154,6 +154,10 @@ class ModelErrorAnalyzer:
     def counts(self):
         return self.bin_counts(self.error)[0]
 
+    def frequencies(self):
+        counts_, total = self.bin_counts(self.error)
+        return counts_ / total
+
     def median_algorithm(self):
         return self.median_ranking(self.error, self.m_id)
 
@@ -170,12 +174,14 @@ class ModelErrorAnalyzer:
             f.write(f'Birkhoff-Von Neumann Ranking: {bv_ids} ({bv_ranking})\n')
             stats_ranking, stats_ids, stats = self.average_algorithm()
             f.write(f'Average Ranking: {stats_ids} ({stats_ranking})\n')
-            med_ranking, med_ids = self.median_algorithm()
+            med_ranking, med_ids, median_values = self.median_algorithm()
             f.write(f'Median Ranking: {med_ids} ({med_ranking})\n')
             max_ranking, max_ids = self.max_algorithm()
             f.write(f'Max Ranking: {max_ids} ({max_ranking})\n')
             min_ranking, min_ids = self.min_algorithm()
             f.write(f'Min Ranking: {min_ids} ({min_ranking})\n')
+
+            f.write(f'Median error: {med_ids} -> {median_values}\n')
 
 
 def plot_barchart(counts, labels, plot_file=None, title=None):
@@ -184,7 +190,7 @@ def plot_barchart(counts, labels, plot_file=None, title=None):
     bar_width = 0.25
     r = np.arange(counts.shape[0])
     for col in range(n):
-        ax.bar(r + col * bar_width, counts[:, col],
+        ax.bar(r + col * bar_width, counts[col, :],
                width=bar_width, label=labels[col])
     ax.set_xticks(r + bar_width)
     ax.set_xticklabels([1, 2, 3])
@@ -232,15 +238,6 @@ def main(args):
         # test_set is _ because ratio is 0
         input_set, _ = common.load_data(dataset_path, n_features, 0.0)
 
-        available_metrics = {
-            "dtw": dtw.distance_fast,
-            "integral": common.integral_error,
-            "kolmogorov_smirnov": common.kolmogorov_smirnov_error,
-            "mse": metrics.mean_squared_error,
-            "msle": metrics.mean_squared_log_error}
-
-        choice = available_metrics[config.get('metric', 'kolmogorov_smirnov')]
-
         models = []
         model_names = []
         for file in paths['models']:
@@ -259,19 +256,54 @@ def main(args):
                 y_pred = y_pred[:, indices, :]
                 y = y[indices, :]
 
-        error_metric = common.calculate_error(y, y_pred, choice)
+        available_metrics = {
+                "dtw": dtw.distance_fast,
+                "kolmogorov_smirnov": common.kolmogorov_smirnov_error,
+                "mse": metrics.mean_squared_error,
+                "mae": metrics.mean_absolute_error}
 
-        analyzer = ModelErrorAnalyzer(error_metric, model_names)
+        metric_ = config.get('metric', 'all')
+        if metric_ == 'all':
+            for metric_, choice in available_metrics.items():
+                error_metric = common.calculate_error(y, y_pred, choice)
 
-        metric_ = config.get('metric', 'kolmogorov_smirnov')
-        basename = f'{label}_{metric_}'
+                analyzer = ModelErrorAnalyzer(error_metric, model_names)
 
-        report = os.path.join(working_dir, f'{basename}_report.txt')
-        analyzer.to_file(report, metric_)
+                basename = f'{label}_{metric_}'
+                report = os.path.join(working_dir, f'{basename}_report.txt')
+                plot_file = os.path.join(working_dir, f'{basename}_barchart.svg')
 
-        plot_file = os.path.join(working_dir, f'{basename}_barchart.svg')
-        counts = analyzer.counts()
-        plot_barchart(counts, model_names, plot_file)
+                analyzer.to_file(report, metric_)
+                frequencies = analyzer.frequencies() * 100
+                with open(report, 'a') as f:
+                    f.write(f'\nRanking percentages:\n')
+                    for i, name_ in enumerate(model_names):
+                        freq_string = [f'{value:.2f} ' for value in frequencies[i]]
+                        f.write(f'{name_:<4} -> {freq_string}\n')
+                plot_barchart(frequencies, model_names, plot_file)
+        else:
+            choice = available_metrics[metric_]
+            error_metric = common.calculate_error(y, y_pred, choice)
+
+            analyzer = ModelErrorAnalyzer(error_metric, model_names)
+
+            basename = f'{label}_{metric_}'
+            report = os.path.join(working_dir, f'{basename}_report.txt')
+            plot_file = os.path.join(working_dir, f'{basename}_barchart.svg')
+
+            analyzer.to_file(report, metric_)
+            frequencies = analyzer.frequencies() * 100
+            with open(report, 'a') as f:
+                f.write(f'\nRanking percentages:\n')
+                for i, name_ in enumerate(model_names):
+                    freq_string = [f'{value:.2f} ' for value in frequencies[i]]
+                    f.write(f'{name_:<4} -> {freq_string}\n')
+            plot_barchart(frequencies, model_names, plot_file)
+
+        r_squared = np.mean(common.calculate_error(y, y_pred, common.r_squared), axis=1)
+        r2_file = os.path.join(working_dir, f'r2_report.txt')
+        with open(r2_file, 'w') as f:
+            f.write(f'Mean R2: {model_names} -> {r_squared}')
 
     return 0
 

@@ -4,15 +4,15 @@
         "inputs": 6
     },
     "hyper_parameters": {
-        "hidden" : [1, 5],
-        "neuron" : [10, 128],
+        "hidden" : [3, 6],
+        "neuron" : [64, 256],
         "learning_rate" : [1e-5, 1e-2],
         "batch_size": [32, 64, 128, 256],
         "tuner": "bayesian_optimization"
     },
     "train_parameters": {
         "architecture": "lstm",
-        "epochs": 200,
+        "epochs": 100,
         "samples": 200,
         "test_ratio": 0.0,
         "validation_ratio": 0.2

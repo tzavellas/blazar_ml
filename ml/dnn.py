@@ -23,9 +23,10 @@ def base_dense(input_shape, output_shape, neurons_p_layer, name):
     input_layer = tf.keras.layers.Input(shape=input_shape)
     hidden = input_layer
     for n_neurons in neurons_p_layer:
-        hidden = tf.keras.layers.Dense(n_neurons, activation="relu")(hidden)
+        hidden = tf.keras.layers.Dense(n_neurons)(hidden)
     output_layer = tf.keras.layers.Dense(output_shape,
-                                         activation='softplus')(hidden)
+                                         activation='softplus'
+                                         )(hidden)
     model = tf.keras.Model(inputs=input_layer, outputs=output_layer, name=name)
     return model
 
