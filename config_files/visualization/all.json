@@ -3,6 +3,7 @@
         "path": "ENV_VARIABLE_PLACEHOLDER",
         "inputs": 6
     },
+    "label": "all",
     "plot_options": {
         "interactive": false,
         "all": true,
@@ -15,10 +16,10 @@
     },
     "paths": {
         "models": [
-            "/home/tzavellas/thesis/hea_ml_project/ml/dnn_bayesian/dnn_bayesian.h5",
-            "/home/tzavellas/thesis/hea_ml_project/ml/gru_grid/gru_grid.h5",
-            "/home/tzavellas/thesis/hea_ml_project/ml/lstm_bayesian/lstm_bayesian.h5"
+            "/home/tzavellas/thesis/hea_ml_project/ml/train/dnn/dnn_bayesian/dnn_bayesian.h5",
+            "/home/tzavellas/thesis/hea_ml_project/ml/train/gru/gru_grid/gru_grid.h5",
+            "/home/tzavellas/thesis/hea_ml_project/ml/train/lstm/lstm_grid/lstm_grid.h5"
         ],
-        "working_dir": "visualize/all"
+        "working_dir": "visualize"
     }
 }

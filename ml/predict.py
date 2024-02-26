@@ -21,7 +21,8 @@ model = tf.keras.models.load_model(model_path)
 
 new_dataset = sys.argv[2]
 
-new_set, new_test = common.load_data(new_dataset, 0) # returns train and test sets
+new_set, new_test = common.load_data(
+    new_dataset, 0)  # returns train and test sets
 
 y_d = common.de_normalize(new_set[1])
 
@@ -46,4 +47,3 @@ df_new.to_csv(os.path.join(out_dir, 'y.csv'), header=False, index=False)
 
 df_pred = pd.DataFrame(np.transpose(y_pred_d))
 df_pred.to_csv(os.path.join(out_dir, 'y_pred.csv'), header=False, index=False)
-

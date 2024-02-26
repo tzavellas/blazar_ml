@@ -38,7 +38,7 @@ class SpectraPlotter:
             self.plt_colors[0],
             self.plt_colors[4],
             self.plt_colors[18]]
-        self.marks = 'ox+|_'
+        self.marks = 'o+x|_'
 
     def plot_dataset_spectrum(self, case_index):
         _, self.ax = plt.subplots(figsize=self.figsize)
@@ -145,7 +145,8 @@ def main(args):
                 case_index=case_slider,
                 model_index=dropdown)
         else:  # Plots all cases defined in the config file
-            working_dir = os.path.abspath(paths['working_dir'])
+            label = config['label']
+            working_dir = os.path.join(os.path.abspath(paths['working_dir']), label)
             os.makedirs(working_dir, exist_ok=True)
             for case in cases:
                 plotter.plot_dataset_spectrum(case)

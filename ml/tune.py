@@ -24,8 +24,6 @@ if __name__ == "__main__":
     except argparse.ArgumentError:
         sys.exit(1)
 
-    np.set_printoptions(precision=4, suppress=True)
-
     with open(args.config) as config:
         config = json.loads(config.read())
 
@@ -68,7 +66,8 @@ if __name__ == "__main__":
 
         hypermodel = hyper[train_parameters['architecture']]
         samples = train_parameters['samples']
-        overwrite = paths.get('overwrite', True)
+
+        overwrite = paths.get('overwrite', False)
         if hyper_parameters['tuner'] == 'random_search':
             tuner = kt.RandomSearch(hypermodel,
                                     objective='val_loss',
@@ -95,18 +94,18 @@ if __name__ == "__main__":
                                             overwrite=overwrite)
         tuner.search_space_summary()
 
-        if overwrite:
-            epochs = train_parameters['epochs']
-            tuner.search(
-                train_full[0],
-                train_full[1],
-                verbose=2,
-                epochs=epochs,
-                validation_split=train_parameters['validation_ratio'],
-                callbacks=[tf.keras.callbacks.TensorBoard(logs)],
-                use_multiprocessing=True)
-        else:
+        oracle_file = os.path.join(working_dir, 'oracle.json')
+        if os.path.exists(oracle_file) and (not overwrite):
             tuner.reload()
+
+        tuner.search(
+            train_full[0],
+            train_full[1],
+            verbose=2,
+            epochs=train_parameters['epochs'],
+            validation_split=train_parameters['validation_ratio'],
+            callbacks=[tf.keras.callbacks.TensorBoard(logs)],
+            use_multiprocessing=True)
 
         tuner.results_summary(num_trials=3)
 

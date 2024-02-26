@@ -10,6 +10,7 @@ from sklearn import metrics
 import tensorflow as tf
 from astropy import constants as const
 from scipy.optimize import linear_sum_assignment
+from scipy.stats import wasserstein_distance
 
 
 class ModelErrorAnalyzer:
@@ -176,10 +177,6 @@ class ModelErrorAnalyzer:
             f.write(f'Average Ranking: {stats_ids} ({stats_ranking})\n')
             med_ranking, med_ids, median_values = self.median_algorithm()
             f.write(f'Median Ranking: {med_ids} ({med_ranking})\n')
-            max_ranking, max_ids = self.max_algorithm()
-            f.write(f'Max Ranking: {max_ids} ({max_ranking})\n')
-            min_ranking, min_ids = self.min_algorithm()
-            f.write(f'Min Ranking: {min_ids} ({min_ranking})\n')
 
             f.write(f'Median error: {med_ids} -> {median_values}\n')
 
@@ -229,7 +226,7 @@ def main(args):
         paths = config['paths']
 
         label = config['label']
-        working_dir = os.path.abspath(paths['working_dir'])
+        working_dir = os.path.join(os.path.abspath(paths['working_dir']), label)
         if not os.path.exists(working_dir):
             os.mkdir(working_dir)
 
@@ -259,6 +256,7 @@ def main(args):
         available_metrics = {
                 "dtw": dtw.distance_fast,
                 "kolmogorov_smirnov": common.kolmogorov_smirnov_error,
+                "wasserstein": wasserstein_distance,
                 "mse": metrics.mean_squared_error,
                 "mae": metrics.mean_absolute_error}
 

@@ -3,6 +3,7 @@
         "path": "ENV_VARIABLE_PLACEHOLDER",
         "inputs": 6
     },
+    "label": "gru",
     "plot_options": {
         "interactive": true,
         "all": true,
@@ -15,9 +16,9 @@
     },
     "paths": {
         "models": [
-            "/home/tzavellas/thesis/hea_ml_project/ml/gru_bayesian/gru_bayesian.h5",
-            "/home/tzavellas/thesis/hea_ml_project/ml/gru_grid/gru_grid.h5",
-            "/home/tzavellas/thesis/hea_ml_project/ml/gru_random/gru_random.h5"
+            "/home/tzavellas/thesis/hea_ml_project/ml/train/gru/gru_bayesian/gru_bayesian.h5",
+            "/home/tzavellas/thesis/hea_ml_project/ml/train/gru/gru_grid/gru_grid.h5",
+            "/home/tzavellas/thesis/hea_ml_project/ml/train/gru/gru_random/gru_random.h5"
         ],
         "working_dir": "visualize"
     }

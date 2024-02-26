@@ -34,7 +34,8 @@ def main(args):
         train_parameters = config['train_parameters']
         paths = config['paths']
 
-        working_dir = os.path.abspath(paths.get('working_dir', './train'))
+        working_dir = os.path.join(os.path.abspath(paths.get(
+            'working_dir', 'train')), train_parameters['architecture'], train_parameters['name'])
         if not os.path.exists(working_dir):
             os.mkdir(working_dir)
 
@@ -71,7 +72,7 @@ def main(args):
                 n_features, n_labels, hidden, neurons, name), 'gru': rnn.build_gru(
                     n_features, n_labels, hidden, neurons, name)}
         # Initialize paths
-        logs = os.path.join(working_dir, f'logs_{name}')
+        logs = os.path.join(working_dir, 'logs')
         backup = os.path.join(working_dir, f'backup_{name}')
         save_path = os.path.join(working_dir, f'{name}.h5')
 

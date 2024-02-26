@@ -34,8 +34,8 @@ def Model(x, P1, P2, P3, P4, P5, P6, P7):
     xp = x_grid + np.log10(me * c**2 / h) + P7
     flux_norm = P1 + np.log10(4 * np.pi * me * c **
                               3 / sigma_T / 3) - np.log10(4 * np.pi * D**2)
-    
-    boost = 4*P7
+
+    boost = 4 * P7
 
     return np.interp(x, xp, y_pred_d[0] + flux_norm + boost)
 

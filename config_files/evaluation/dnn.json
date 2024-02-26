@@ -4,7 +4,7 @@
         "inputs": 6
     },
     "label": "dnn",
-    "metric": "mse",
+    "metric": "all",
     "plot_options": {
         "all": true,
         "cases": [
@@ -15,9 +15,9 @@
     },
     "paths": {
         "models": [
-            "/home/tzavellas/thesis/hea_ml_project/ml/dnn_bayesian/dnn_bayesian.h5",
-            "/home/tzavellas/thesis/hea_ml_project/ml/dnn_grid/dnn_grid.h5",
-            "/home/tzavellas/thesis/hea_ml_project/ml/dnn_random/dnn_random.h5"
+            "/home/tzavellas/thesis/hea_ml_project/ml/train/dnn/dnn_bayesian/dnn_bayesian.h5",
+            "/home/tzavellas/thesis/hea_ml_project/ml/train/dnn/dnn_grid/dnn_grid.h5",
+            "/home/tzavellas/thesis/hea_ml_project/ml/train/dnn/dnn_random/dnn_random.h5"
         ],
         "working_dir": "evaluation"
     }

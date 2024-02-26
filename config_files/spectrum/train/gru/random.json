@@ -6,16 +6,16 @@
     "train_parameters": {
         "architecture": "gru",
         "name": "gru_random",
-        "hidden": 1,
-        "neurons": 120,
-        "batch_size": 64,
-        "epochs": 150,
-        "learning_rate": 0.0030837883281960494,
+        "hidden": 4,
+        "neurons": 121,
+        "batch_size": 256,
+        "epochs": 220,
+        "learning_rate": 0.001900054094119781,
         "test_ratio": 0.05,
         "validation_ratio": 0.15
     },
     "paths": {
-        "working_dir": "gru_random",
+        "working_dir": "train",
         "report": true,
         "on_exists": "overwrite"
     }

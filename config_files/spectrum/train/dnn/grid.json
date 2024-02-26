@@ -7,15 +7,15 @@
         "architecture": "dnn",
         "name": "dnn_grid",
         "hidden": 4,
-        "neurons": 10,
-        "batch_size": 64,
-        "epochs": 500,
-        "learning_rate": 0.0095005,
+        "neurons": 65,
+        "batch_size": 128,
+        "epochs": 300,
+        "learning_rate": 0.0005095000000000001,
         "test_ratio": 0.05,
         "validation_ratio": 0.15
     },
     "paths": {
-        "working_dir": "dnn_grid",
+        "working_dir": "train",
         "report": true,
         "on_exists": "overwrite"
     }

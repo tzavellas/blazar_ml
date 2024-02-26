@@ -21,6 +21,6 @@
         "working_dir": "tune_lstm_bayesian",
         "logs": "logs",
         "report": "report.txt",
-        "overwrite": true
+        "overwrite": false
     }
 }

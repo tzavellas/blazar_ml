@@ -6,16 +6,16 @@
     "train_parameters": {
         "architecture": "gru",
         "name": "gru_bayesian",
-        "hidden": 1,
-        "neurons": 106,
-        "batch_size": 64,
-        "epochs": 120,
-        "learning_rate": 0.003431688269956458,
+        "hidden": 4,
+        "neurons": 235,
+        "batch_size": 32,
+        "epochs": 100,
+        "learning_rate": 0.005486096705879133,
         "test_ratio": 0.05,
         "validation_ratio": 0.15
     },
     "paths": {
-        "working_dir": "gru_bayesian",
+        "working_dir": "train",
         "report": true,
         "on_exists": "overwrite"
     }

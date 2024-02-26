@@ -3,6 +3,7 @@
         "path": "ENV_VARIABLE_PLACEHOLDER",
         "inputs": 6
     },
+    "label": "lstm",
     "plot_options": {
         "interactive": true,
         "all": true,
@@ -15,9 +16,9 @@
     },
     "paths": {
         "models": [
-            "/home/tzavellas/thesis/hea_ml_project/ml/lstm_bayesian/lstm_bayesian.h5",
-            "/home/tzavellas/thesis/hea_ml_project/ml/lstm_grid/lstm_grid.h5",
-            "/home/tzavellas/thesis/hea_ml_project/ml/lstm_random/lstm_random.h5"
+            "/home/tzavellas/thesis/hea_ml_project/ml/train/lstm/lstm_bayesian/lstm_bayesian.h5",
+            "/home/tzavellas/thesis/hea_ml_project/ml/train/lstm/lstm_grid/lstm_grid.h5",
+            "/home/tzavellas/thesis/hea_ml_project/ml/train/lstm/lstm_random/lstm_random.h5"
         ],
         "working_dir": "visualize"
     }

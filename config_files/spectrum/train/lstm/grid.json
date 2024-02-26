@@ -6,16 +6,16 @@
     "train_parameters": {
         "architecture": "lstm",
         "name": "lstm_grid",
-        "hidden": 1,
-        "neurons": 11,
-        "batch_size": 256,
-        "epochs": 2000,
-        "learning_rate": 0.0045055,
+        "hidden": 3,
+        "neurons": 64,
+        "batch_size": 32,
+        "epochs": 200,
+        "learning_rate": 0.0005095000000000001,
         "test_ratio": 0.05,
         "validation_ratio": 0.15
     },
     "paths": {
-        "working_dir": "lstm_grid",
+        "working_dir": "train",
         "report": true,
         "on_exists": "overwrite"
     }

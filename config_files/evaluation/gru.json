@@ -4,7 +4,7 @@
         "inputs": 6
     },
     "label": "gru",
-    "metric": "mse",
+    "metric": "all",
     "plot_options": {
         "all": true,
         "cases": [
@@ -15,9 +15,9 @@
     },
     "paths": {
         "models": [
-            "/home/tzavellas/thesis/hea_ml_project/ml/gru_bayesian/gru_bayesian.h5",
-            "/home/tzavellas/thesis/hea_ml_project/ml/gru_grid/gru_grid.h5",
-            "/home/tzavellas/thesis/hea_ml_project/ml/gru_random/gru_random.h5"
+            "/home/tzavellas/thesis/hea_ml_project/ml/train/gru/gru_bayesian/gru_bayesian.h5",
+            "/home/tzavellas/thesis/hea_ml_project/ml/train/gru/gru_grid/gru_grid.h5",
+            "/home/tzavellas/thesis/hea_ml_project/ml/train/gru/gru_random/gru_random.h5"
         ],
         "working_dir": "evaluation"
     }

@@ -21,6 +21,6 @@
         "working_dir": "tune_gru_grid",
         "logs": "logs",
         "report": "report.txt",
-        "overwrite": true
+        "overwrite": false
     }
 }

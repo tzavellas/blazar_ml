@@ -6,16 +6,16 @@
     "train_parameters": {
         "architecture": "dnn",
         "name": "dnn_bayesian",
-        "hidden": 3,
-        "neurons": 128,
-        "batch_size": 32,
+        "hidden": 5,
+        "neurons": 64,
+        "batch_size": 256,
         "epochs": 300,
-        "learning_rate": 0.0032134118227590104,
+        "learning_rate": 0.0010643742905975936,
         "test_ratio": 0.05,
         "validation_ratio": 0.15
     },
     "paths": {
-        "working_dir": "dnn_bayesian",
+        "working_dir": "train",
         "report": true,
         "on_exists": "overwrite"
     }
