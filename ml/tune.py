@@ -3,7 +3,6 @@ import sys
 import argparse
 import common
 import json
-import numpy as np
 import os
 # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 import tensorflow as tf
@@ -44,7 +43,7 @@ if __name__ == "__main__":
 
         logs = os.path.join(working_dir, paths.get('logs', 'logs'))
         if not os.path.exists(working_dir):
-            os.mkdir(working_dir)
+            os.makedirs(working_dir)
 
         dataset_path = dataset['path']
         n_features = dataset['inputs']
