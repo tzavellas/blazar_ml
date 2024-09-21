@@ -47,6 +47,7 @@ conda activate blazarml
 ```
 
 ## Usage
+
 ### Creating a sample from the input parameter space
 The script `prepare_inputs.py` generates a sample of the input space. Below is the basic usage and description of its options.
 
@@ -57,7 +58,6 @@ python prepare_inputs.py [-h] [-s SIZE] [-o OUT]
 * -h, --help: Displays the help message and exits.
 * -s SIZE, --size SIZE: Specifies the size of the sample (default is 10).
 * -o OUT, --out OUT: Specifies the output file in CSV format (default is out.csv).
-
 #### Example
 1. Generate a sample with the default size and output file:
   ```
@@ -83,29 +83,29 @@ There are three types of neural network (NN) models that can be trained, dependi
 - **gru**: A [Gated Recurrent Unit (GRU)](https://www.tensorflow.org/api_docs/python/tf/keras/layers/GRU)
 - **lstm**: A [Long Short-Term Memory (LSTM) layer](https://www.tensorflow.org/api_docs/python/tf/keras/layers/LSTM)
 
-### Hyperparameter Tuning
-
+#### Hyperparameter Tuning
 Each model comes with a set of hyperparameters that can be adjusted. These hyperparameters significantly impact the convergence and performance of the model during training, so they must be carefully chosen. To optimize these hyperparameters, we use [Keras Tuner](https://keras.io/keras_tuner/), which automates the process of finding the best configuration for the model.
 
-
-* Single run: Use a `config` file under `config_files/spectrum/tune`.
+#### Examples
+* Single run: Use a `CONFIG` file under `config_files/spectrum/tune`.
   ```bash
-  python ml/tune.py -c <config>
+  python ml/tune.py -c CONFIG
   ```
-* Single type run: Choose a `type` among the following `{dnn, rnn, gru, lstm}`. This will run all config files under `config_files/spectrum/tune/<type>`.
+* Single type run: Choose a `TYPE` among the following `{dnn, rnn, gru, lstm}`. This will run all config files under `config_files/spectrum/tune/TYPE`.
   ```bash
-  ./train.sh -m tune -t <type>
+  ./train.sh -m tune -t TYPE
   ```
 
 
-### Training
-* Single run: Use a `config` file under `config_files/spectrum/train`.
+### Training a NN model
+#### Examples
+* Single run: Use a `CONFIG` file under `config_files/spectrum/train`.
   ```bash
-  python ml/train.py -c `<config>`
+  python ml/train.py -c CONFIG
   ```
-* Single type run: Choose a `type` among the following `{dnn, rnn, gru, lstm}`. This will run all config files under `config_files/spectrum/train/<type>`.
+* Single type run: Choose a `TYPE` among the following `{dnn, rnn, gru, lstm}`. This will run all config files under `config_files/spectrum/train/TYPE`.
   ```bash
-  ./train.sh -m train -t <type>
+  ./train.sh -m train -t TYPE
   ```
 
 [comment]: <> ## License
