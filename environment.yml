@@ -1,20 +1,16 @@
-name: tf3
+name: blazarml
 channels:
   - conda-forge
+  - defaults
 dependencies:
   - astropy
   - autopep8
-  - corner
   - dtaidistance
-  - emcee
   - jupyter
   - matplotlib
   - keras-tuner
-  - ncurses
   - numpy
   - pandas
-  - peakutils
   - python
-  - spyder
-  - tensorflow-gpu=2.11.0
-  - ultranest
+  - tensorflow-gpu>=2.11.0
+  # - tensorflow>=2.11.0

@@ -105,9 +105,9 @@ def generate_sample_inputs(N, out):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generates a sample of the input space')
     parser.add_argument('-s', '--size', type=int, default=10, 
-                        help='Size of the sample')
+                        help='Size of the sample. (Default: 10)')
     parser.add_argument('-o', '--out', type=str, default='out.csv', 
-                        help='Output file in csv format')
+                        help='Output file in csv format. (Default: out.csv)')
     
     try:
         args = parser.parse_args()
